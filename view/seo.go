@@ -23,7 +23,6 @@ type Head struct {
 	Path        string    // absolute path for canonical/og:url; "" omits them
 	OGType      string    // "website" (default) or "article"
 	Published   time.Time // posts only; zero => omitted
-	Modified    time.Time // posts only; zero => omitted
 	Tags        []string  // posts only; emitted as article:tag
 	JSONLD      []template.HTML
 }

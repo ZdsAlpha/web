@@ -26,9 +26,6 @@ templ Layout(h Head) {
 			if !h.Published.IsZero() {
 				<meta property="article:published_time" content={ h.Published.UTC().Format(time.RFC3339) }/>
 			}
-			if !h.Modified.IsZero() {
-				<meta property="article:modified_time" content={ h.Modified.UTC().Format(time.RFC3339) }/>
-			}
 			for _, t := range h.Tags {
 				<meta property="article:tag" content={ t }/>
 			}
