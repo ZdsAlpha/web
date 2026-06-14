@@ -1,0 +1,32 @@
+# Fly.io configuration. App name must be globally unique; adjust if taken.
+app = 'arehman-dev'
+primary_region = 'nrt' # Tokyo — closest to the expected audience
+
+[build]
+
+[env]
+  PORT = '8080'
+
+[http_service]
+  internal_port = 8080
+  force_https = true            # redirect HTTP -> HTTPS at Fly's edge
+  auto_stop_machines = 'stop'
+  auto_start_machines = true
+  min_machines_running = 0      # scale to zero when idle (cheapest)
+  processes = ['app']
+
+  [http_service.concurrency]
+    type = 'requests'
+    soft_limit = 200
+    hard_limit = 250
+
+  [[http_service.checks]]
+    grace_period = '5s'
+    interval = '15s'
+    timeout = '5s'
+    method = 'GET'
+    path = '/healthz'
+
+[[vm]]
+  size = 'shared-cpu-1x'
+  memory = '256mb'

@@ -1,0 +1,47 @@
+package view
+
+import (
+	"github.com/ZdsAlpha/web/internal/content"
+	"strconv"
+)
+
+// Home renders the writing index: a reverse-chronological list of posts.
+templ Home(posts []*content.Post) {
+	@Layout("Abdul Rahman — Writing", "Notes on software, systems, and building things.") {
+		<section class="intro">
+			<h1>Writing</h1>
+			<p class="muted">Notes on software, systems, and building things.</p>
+		</section>
+		<ul class="post-list">
+			for _, p := range posts {
+				<li class="post-item">
+					<a class="post-link" href={ templ.SafeURL("/posts/" + p.Slug) }>
+						<div class="post-meta">
+							<time datetime={ p.Date.Format("2006-01-02") }>{ p.Date.Format("Jan 2, 2006") }</time>
+							<span class="dot">·</span>
+							<span>{ readMins(p.ReadingMins) }</span>
+						</div>
+						<h2 class="post-title">{ p.Title }</h2>
+						if p.Summary != "" {
+							<p class="post-summary">{ p.Summary }</p>
+						}
+						if len(p.Tags) > 0 {
+							<div class="tags">
+								for _, t := range p.Tags {
+									<span class="tag">{ t }</span>
+								}
+							</div>
+						}
+					</a>
+				</li>
+			}
+		</ul>
+	}
+}
+
+func readMins(m int) string {
+	if m == 1 {
+		return "1 min read"
+	}
+	return strconv.Itoa(m) + " min read"
+}

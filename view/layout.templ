@@ -1,0 +1,55 @@
+package view
+
+// Layout is the shared HTML shell. desc feeds the meta + Open Graph tags.
+templ Layout(title, desc string) {
+	<!DOCTYPE html>
+	<html lang="en" data-theme="">
+		<head>
+			<meta charset="utf-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1"/>
+			<title>{ title }</title>
+			if desc != "" {
+				<meta name="description" content={ desc }/>
+				<meta property="og:description" content={ desc }/>
+			}
+			<meta property="og:title" content={ title }/>
+			<meta property="og:type" content="website"/>
+			<link rel="preconnect" href="https://fonts.googleapis.com"/>
+			<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+			<link
+				rel="stylesheet"
+				href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap"
+			/>
+			<link rel="stylesheet" href="/static/css/style.css"/>
+			<link rel="stylesheet" href="/static/css/chroma.css"/>
+			// Set theme before paint to avoid a flash of the wrong color scheme.
+			<script>
+				(function () {
+					var t = localStorage.getItem("theme");
+					if (!t) t = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+					document.documentElement.setAttribute("data-theme", t);
+				})();
+			</script>
+		</head>
+		<body>
+			<header class="site-header">
+				<nav class="nav">
+					<a class="brand" href="/">arehman.dev</a>
+					<div class="nav-links">
+						<a href="/">Writing</a>
+						<a href="/about">About</a>
+						<button id="theme-toggle" class="theme-toggle" type="button" aria-label="Toggle theme">◐</button>
+					</div>
+				</nav>
+			</header>
+			<main class="content">
+				{ children... }
+			</main>
+			<footer class="site-footer">
+				<span>© 2026 Abdul Rahman</span>
+				<a href="https://github.com/ZdsAlpha">GitHub</a>
+			</footer>
+			<script src="/static/js/theme.js"></script>
+		</body>
+	</html>
+}

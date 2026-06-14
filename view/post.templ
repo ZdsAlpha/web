@@ -1,0 +1,42 @@
+package view
+
+import (
+	"github.com/ZdsAlpha/web/internal/content"
+	"strconv"
+)
+
+// Post renders a single blog entry.
+templ Post(p *content.Post) {
+	@Layout(p.Title+" — Abdul Rahman", p.Description) {
+		<article class="post">
+			<header class="post-header">
+				<h1>{ p.Title }</h1>
+				<div class="post-meta">
+					<time datetime={ p.Date.Format("2006-01-02") }>{ p.Date.Format("Jan 2, 2006") }</time>
+					<span class="dot">·</span>
+					<span>{ readMinsLabel(p.ReadingMins) }</span>
+				</div>
+				if len(p.Tags) > 0 {
+					<div class="tags">
+						for _, t := range p.Tags {
+							<span class="tag">{ t }</span>
+						}
+					</div>
+				}
+			</header>
+			<div class="prose">
+				@templ.Raw(string(p.HTML))
+			</div>
+			<footer class="post-footer">
+				<a href="/">← All writing</a>
+			</footer>
+		</article>
+	}
+}
+
+func readMinsLabel(m int) string {
+	if m == 1 {
+		return "1 min read"
+	}
+	return strconv.Itoa(m) + " min read"
+}
