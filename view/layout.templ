@@ -23,13 +23,7 @@ templ Layout(title, desc string) {
 			<link rel="stylesheet" href="/static/css/style.css"/>
 			<link rel="stylesheet" href="/static/css/chroma.css"/>
 			// Set theme before paint to avoid a flash of the wrong color scheme.
-			<script>
-				(function () {
-					var t = localStorage.getItem("theme");
-					if (!t) t = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-					document.documentElement.setAttribute("data-theme", t);
-				})();
-			</script>
+			<script src="/static/js/theme-init.js"></script>
 		</head>
 		<body>
 			<header class="site-header">
