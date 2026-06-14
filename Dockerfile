@@ -1,5 +1,7 @@
 # ---- Build stage ----
-FROM golang:1.26 AS build
+# Pinned to a patched Go release (covers the go1.26.1 stdlib advisories found by
+# govulncheck: GO-2026-4870/4918/4865/4866/4946 etc.). Bump as new patches ship.
+FROM golang:1.26.3 AS build
 WORKDIR /src
 
 # Cache dependencies first.
