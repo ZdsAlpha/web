@@ -1,6 +1,5 @@
-// Command dns manages Porkbun DNS records for the site's domain. It uses the
-// Porkbun JSON API directly (Go's TLS stack, so it avoids the Windows schannel
-// revocation issue that breaks curl on some machines).
+// Command dns manages Porkbun DNS records for the site's domain via the
+// Porkbun JSON API.
 //
 // Credentials come from the environment:
 //
