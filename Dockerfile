@@ -8,12 +8,12 @@ RUN go mod download
 
 COPY . .
 
-# Generate templ components + syntax-highlighting CSS, then build a static,
-# stripped binary. Assets are embedded via //go:embed, so the runtime image
-# needs nothing but the binary.
-RUN go run github.com/a-h/templ/cmd/templ generate \
- && go run ./tools/genchroma \
- && CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /out/web .
+# Build a static, stripped binary. The generated files (view/*_templ.go and
+# static/css/chroma.css) are committed to the repo, so no codegen runs here —
+# regenerate them with `templ generate` + `go run ./tools/genchroma` before
+# committing template/highlighting changes. Assets are embedded via //go:embed,
+# so the runtime image needs nothing but the binary.
+RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /out/web .
 
 # ---- Runtime stage ----
 # distroless static: ships CA certs + tzdata, runs as nonroot.
