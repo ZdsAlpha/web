@@ -10,11 +10,13 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
 	"github.com/ZdsAlpha/web/internal/content"
 	"github.com/ZdsAlpha/web/internal/web"
+	"github.com/ZdsAlpha/web/view"
 )
 
 //go:embed all:content
@@ -43,10 +45,14 @@ func main() {
 	}
 	log.Printf("loaded %d posts, %d tags", len(store.Posts()), len(store.Tags()))
 
+	// Absolute origin for canonical URLs and the sitemap. Override per-env.
+	baseURL := strings.TrimRight(cmp.Or(os.Getenv("BASE_URL"), "https://arehman.dev"), "/")
+	view.SetBaseURL(baseURL)
+
 	addr := ":" + cmp.Or(os.Getenv("PORT"), "8080")
 	srv := &http.Server{
 		Addr:              addr,
-		Handler:           web.Handler(store, staticRoot),
+		Handler:           web.Handler(store, staticRoot, baseURL),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       10 * time.Second,
 		WriteTimeout:      15 * time.Second,

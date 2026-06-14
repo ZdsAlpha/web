@@ -1,19 +1,47 @@
 package view
 
-// Layout is the shared HTML shell. desc feeds the meta + Open Graph tags.
-templ Layout(title, desc string) {
+import "time"
+
+// Layout is the shared HTML shell. The Head struct carries the per-page title,
+// description, canonical path, Open Graph type and JSON-LD blocks.
+templ Layout(h Head) {
 	<!DOCTYPE html>
 	<html lang="en" data-theme="">
 		<head>
 			<meta charset="utf-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1"/>
-			<title>{ title }</title>
-			if desc != "" {
-				<meta name="description" content={ desc }/>
-				<meta property="og:description" content={ desc }/>
+			<title>{ h.Title }</title>
+			if h.Description != "" {
+				<meta name="description" content={ h.Description }/>
+				<meta property="og:description" content={ h.Description }/>
 			}
-			<meta property="og:title" content={ title }/>
-			<meta property="og:type" content="website"/>
+			if c := canonical(h.Path); c != "" {
+				<link rel="canonical" href={ c }/>
+				<meta property="og:url" content={ c }/>
+			}
+			<meta property="og:title" content={ h.Title }/>
+			<meta property="og:type" content={ h.ogType() }/>
+			<meta property="og:site_name" content="arehman.dev"/>
+			<meta property="og:locale" content="en_US"/>
+			if !h.Published.IsZero() {
+				<meta property="article:published_time" content={ h.Published.UTC().Format(time.RFC3339) }/>
+			}
+			if !h.Modified.IsZero() {
+				<meta property="article:modified_time" content={ h.Modified.UTC().Format(time.RFC3339) }/>
+			}
+			for _, t := range h.Tags {
+				<meta property="article:tag" content={ t }/>
+			}
+			if img := ogImage(); img != "" {
+				<meta property="og:image" content={ img }/>
+				<meta property="og:image:width" content="1200"/>
+				<meta property="og:image:height" content="630"/>
+				<meta property="og:image:alt" content="arehman.dev — Notes on software, systems, and building things."/>
+			}
+			<meta name="twitter:card" content="summary_large_image"/>
+			for _, block := range h.JSONLD {
+				@templ.Raw(string(block))
+			}
 			<link rel="preconnect" href="https://fonts.googleapis.com"/>
 			<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 			<link

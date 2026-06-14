@@ -158,6 +158,16 @@ func (s *Store) Page(slug string) (*Page, bool) {
 
 func (s *Store) PostsByTag(tag string) []*Post { return s.tagToPosts[tag] }
 
+// PageSlugs returns the slugs of all standalone pages, sorted for stable output.
+func (s *Store) PageSlugs() []string {
+	slugs := make([]string, 0, len(s.pageBySlug))
+	for slug := range s.pageBySlug {
+		slugs = append(slugs, slug)
+	}
+	sort.Strings(slugs)
+	return slugs
+}
+
 func (s *Store) Tags() []string {
 	tags := make([]string, 0, len(s.tagToPosts))
 	for t := range s.tagToPosts {

@@ -7,7 +7,7 @@ import (
 
 // Home renders the writing index: a reverse-chronological list of posts.
 templ Home(posts []*content.Post) {
-	@Layout("Abdul Rahman — Writing", "Notes on software, systems, and building things.") {
+	@Layout(HomeHead("Abdul Rahman — Writing", "Notes on software, systems, and building things.")) {
 		<section class="intro">
 			<h1>Writing</h1>
 			<p class="muted">Notes on software, systems, and building things.</p>

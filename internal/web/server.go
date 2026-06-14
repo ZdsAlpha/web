@@ -12,8 +12,10 @@ import (
 )
 
 // Handler builds the application's http.Handler from the content store and the
-// embedded static asset filesystem (rooted so that "css/..." resolves).
-func Handler(store *content.Store, staticFS fs.FS) http.Handler {
+// embedded static asset filesystem (rooted so that "css/..." resolves). baseURL
+// is the site's absolute origin (e.g. "https://arehman.dev"), used to emit
+// robots.txt and an absolute-URL sitemap.
+func Handler(store *content.Store, staticFS fs.FS, baseURL string) http.Handler {
 	mux := http.NewServeMux()
 
 	// noDirFS disables directory listings; only files are served.
@@ -24,6 +26,9 @@ func Handler(store *content.Store, staticFS fs.FS) http.Handler {
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte("ok"))
 	})
+
+	mux.HandleFunc("GET /robots.txt", robots(baseURL))
+	mux.HandleFunc("GET /sitemap.xml", sitemap(store, baseURL))
 
 	mux.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request) {
 		render(w, r, http.StatusOK, view.Home(store.Posts()))

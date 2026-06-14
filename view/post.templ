@@ -7,7 +7,7 @@ import (
 
 // Post renders a single blog entry.
 templ Post(p *content.Post) {
-	@Layout(p.Title+" — Abdul Rahman", p.Description) {
+	@Layout(PostHead(p)) {
 		<article class="post">
 			<header class="post-header">
 				<h1>{ p.Title }</h1>
