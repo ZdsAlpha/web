@@ -5,6 +5,10 @@
 
 # Build output
 /bin/
+.tmp/
+node_modules/
+test-results/
+playwright-report/
 *.exe
 *.log
 

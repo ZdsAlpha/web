@@ -1,0 +1,12 @@
+{
+  "private": true,
+  "scripts": {
+    "test:e2e": "playwright test",
+    "test:go": "node scripts/go-test.mjs",
+    "test": "npm run test:go && npm run test:e2e"
+  },
+  "devDependencies": {
+    "@picocss/pico": "^2.1.1",
+    "@playwright/test": "^1.57.0"
+  }
+}

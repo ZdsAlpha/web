@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="680" height="430" viewBox="0 0 680 430" role="img" aria-labelledby="title desc">
+  <title id="title">Best known BPB after each iteration</title>
+  <desc id="desc">A line chart showing best known held-out bits per byte improving from 1.871 at iteration zero to 1.604 after iteration six.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#f1f5f9"/>
+    </linearGradient>
+    <style>
+      .title { fill: #0f172a; font: 700 23px ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif; }
+      .subtitle { fill: #475569; font: 500 13px ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif; }
+      .axis { stroke: #475569; stroke-width: 1.7; }
+      .grid { stroke: #d7dee8; stroke-width: 1; }
+      .line { fill: none; stroke: #2563eb; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+      .dot { fill: #2563eb; stroke: #ffffff; stroke-width: 3; }
+      .moe { fill: #dc2626; stroke: #ffffff; stroke-width: 3; }
+      .tick { fill: #64748b; font: 600 11px ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif; }
+      .label { fill: #0f172a; font: 700 13px ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif; }
+      .note { fill: #334155; font: 700 12px ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif; }
+      .soft { fill: #64748b; font: 600 11px ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif; }
+    </style>
+  </defs>
+
+  <rect width="680" height="430" fill="url(#bg)"/>
+  <text class="title" x="32" y="42">Best Known Held-Out BPB After Each Iteration</text>
+  <text class="subtitle" x="32" y="66">Lower is better. Dense models plateaued; sparse MoE broke below the floor.</text>
+
+  <line class="grid" x1="58" y1="104" x2="640" y2="104"/>
+  <line class="grid" x1="58" y1="164" x2="640" y2="164"/>
+  <line class="grid" x1="58" y1="224" x2="640" y2="224"/>
+  <line class="grid" x1="58" y1="284" x2="640" y2="284"/>
+  <line class="grid" x1="58" y1="344" x2="640" y2="344"/>
+  <line class="axis" x1="58" y1="344" x2="640" y2="344"/>
+  <line class="axis" x1="58" y1="92" x2="58" y2="344"/>
+
+  <text class="tick" x="24" y="108">1.90</text>
+  <text class="tick" x="24" y="168">1.80</text>
+  <text class="tick" x="24" y="228">1.70</text>
+  <text class="tick" x="24" y="288">1.60</text>
+  <text class="tick" x="24" y="348">1.50</text>
+
+  <path class="line" d="M58 121 L155 121 L252 260 L349 261 L446 267 L543 282 L640 282"/>
+
+  <circle class="dot" cx="58" cy="121" r="7"/>
+  <circle class="dot" cx="155" cy="121" r="7"/>
+  <circle class="dot" cx="252" cy="260" r="7"/>
+  <circle class="dot" cx="349" cy="261" r="7"/>
+  <circle class="dot" cx="446" cy="267" r="7"/>
+  <circle class="moe" cx="543" cy="282" r="8"/>
+  <circle class="moe" cx="640" cy="282" r="8"/>
+
+  <text class="tick" x="54" y="369">0</text>
+  <text class="tick" x="151" y="369">1</text>
+  <text class="tick" x="248" y="369">2</text>
+  <text class="tick" x="345" y="369">3</text>
+  <text class="tick" x="442" y="369">4</text>
+  <text class="tick" x="539" y="369">5</text>
+  <text class="tick" x="636" y="369">6</text>
+  <text class="soft" x="320" y="399" text-anchor="middle">Iteration</text>
+
+  <text class="label" x="70" y="113">1.871</text>
+  <text class="label" x="266" y="251">1.640</text>
+  <text class="label" x="457" y="257">1.629</text>
+  <text class="label" x="548" y="270">1.605</text>
+  <text class="label" x="590" y="305">1.604</text>
+
+  <path d="M248 236 H456" fill="none" stroke="#94a3b8" stroke-width="2" stroke-dasharray="5 5"/>
+  <text class="note" x="352" y="224" text-anchor="middle">Dense plateau</text>
+  <text class="note" x="590" y="245" text-anchor="middle" fill="#dc2626">MoE replication</text>
+</svg>
