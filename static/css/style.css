@@ -140,9 +140,9 @@ a:hover { text-decoration: underline; }
 	content: "";
 	width: 8px;
 	height: 8px;
+	flex: 0 0 8px;
 	border-radius: 50%;
 	background: var(--accent-2);
-	box-shadow: 10px 0 0 var(--accent-3);
 }
 
 .nav-links { display: flex; align-items: center; gap: var(--space-5); }
