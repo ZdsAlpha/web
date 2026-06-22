@@ -58,11 +58,23 @@ func TestResponsiveLayoutContracts(t *testing.T) {
 	if strings.Contains(css, "letter-spacing: -") {
 		t.Fatal("negative letter spacing can make narrow layouts harder to read")
 	}
+	requireContains(t, css, "--pico-font-size: 100%")
+
+	htmlBlock := cssBlock(t, css, `html`)
+	requireContains(t, htmlBlock, "font-size: 16px")
 
 	contentBlock := cssBlock(t, css, `\.content`)
 	requireContains(t, contentBlock, "width: 100%")
-	requireContains(t, contentBlock, "max-width: var(--reading)")
+	requireContains(t, contentBlock, "max-width: calc(var(--reading)")
 	requireContains(t, contentBlock, "min-width: 0")
+
+	postBlock := cssBlock(t, css, `article\.post`)
+	requireContains(t, postBlock, "padding: 0")
+	requireContains(t, postBlock, "background: transparent")
+
+	postHeaderBlock := cssBlock(t, css, `article\.post > header\.post-header`)
+	requireContains(t, postHeaderBlock, "padding: 0 0")
+	requireContains(t, postHeaderBlock, "background: transparent")
 
 	imageBlock := cssBlock(t, css, `\.prose img`)
 	requireContains(t, imageBlock, "max-width: 100%")

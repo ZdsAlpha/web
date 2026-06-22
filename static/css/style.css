@@ -4,8 +4,12 @@
 	--font-serif: "Source Serif 4", Georgia, serif;
 	--font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", monospace;
 
-	--reading: 740px;
-	--wrap: 1080px;
+	--reading: 760px;
+	--wrap: 1120px;
+
+	/* Pico's default responsive root scale makes long-form pages feel zoomed. */
+	--pico-font-size: 100%;
+	--pico-line-height: 1.5;
 
 	--space-1: 4px;
 	--space-2: 8px;
@@ -49,13 +53,18 @@
 }
 
 /* ---- Base --------------------------------------------------------------- */
+html {
+	font-size: 16px;
+	-webkit-text-size-adjust: 100%;
+}
+
 body {
 	margin: 0;
 	background: var(--bg);
 	color: var(--text);
 	font-family: var(--font-serif);
-	font-size: 1.0625rem;
-	line-height: 1.7;
+	font-size: 1rem;
+	line-height: 1.68;
 	display: flex;
 	flex-direction: column;
 	min-height: 100vh;
@@ -85,7 +94,7 @@ h1, h2, h3, h4 {
 	text-wrap: balance;
 }
 
-h1 { font-size: 2.55rem; margin: 0 0 var(--space-3); }
+h1 { font-size: 2.25rem; margin: 0 0 var(--space-3); }
 h2 { font-size: 1.55rem; margin: var(--space-7) 0 var(--space-3); }
 h3 { font-size: 1.2rem; margin: var(--space-6) 0 var(--space-2); }
 
@@ -114,6 +123,10 @@ a:hover { text-decoration: underline; }
 	justify-content: space-between;
 	min-width: 0;
 }
+.nav a,
+.nav button {
+	margin: 0;
+}
 
 .brand {
 	display: inline-flex;
@@ -137,24 +150,31 @@ a:hover { text-decoration: underline; }
 .nav-links a:hover { color: var(--text); }
 
 .theme-toggle {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	appearance: none;
 	background: none;
 	border: 1px solid var(--border);
 	color: var(--muted);
 	border-radius: 6px;
 	width: 32px;
 	height: 32px;
+	margin: 0;
+	padding: 0;
 	cursor: pointer;
 	font-size: 0.95rem;
 	line-height: 1;
+	box-shadow: none;
 }
 .theme-toggle:hover { color: var(--text); border-color: var(--muted); }
 
 .content {
 	flex: 1;
 	width: 100%;
-	max-width: var(--reading);
+	max-width: calc(var(--reading) + (var(--space-5) * 2));
 	margin: 0 auto;
-	padding: var(--space-7) var(--space-5) var(--space-8);
+	padding: var(--space-6) var(--space-5) var(--space-8);
 	min-width: 0;
 }
 
@@ -211,7 +231,7 @@ a:hover { text-decoration: underline; }
 }
 
 /* ---- Post / page -------------------------------------------------------- */
-.post {
+article.post {
 	min-width: 0;
 	margin: 0;
 	padding: 0;
@@ -220,15 +240,16 @@ a:hover { text-decoration: underline; }
 	background: transparent;
 	box-shadow: none;
 }
-.post-header {
-	margin: 0 0 var(--space-7);
-	padding-bottom: var(--space-5);
+article.post > header.post-header {
+	margin: 0 0 var(--space-6);
+	padding: 0 0 var(--space-4);
 	border-bottom: 1px solid var(--border);
 	background: transparent;
+	border-radius: 0;
 }
 .post-header h1 {
-	font-size: 2.65rem;
-	line-height: 1.13;
+	font-size: 2.25rem;
+	line-height: 1.16;
 	font-weight: 700;
 }
 .post-header .post-meta { margin-top: var(--space-3); }
@@ -238,7 +259,7 @@ a:hover { text-decoration: underline; }
 .prose > :first-child { margin-top: 0; }
 .prose p, .prose ul, .prose ol { margin: var(--space-5) 0; }
 .prose > p:first-child {
-	font-size: 1.15rem;
+	font-size: 1.06rem;
 	line-height: 1.65;
 	color: var(--text);
 }
@@ -332,11 +353,12 @@ a:hover { text-decoration: underline; }
 .prose .anchor { color: var(--muted); text-decoration: none; opacity: 0; margin-right: 0.3em; }
 .prose h2:hover .anchor, .prose h3:hover .anchor { opacity: 1; }
 
-.post-footer {
+article.post > footer.post-footer {
 	margin: var(--space-8) 0 0;
 	padding: var(--space-5) 0 0;
 	border-top: 1px solid var(--border);
 	background: transparent;
+	border-radius: 0;
 }
 .post-footer a { font-family: var(--font-sans); font-size: 0.9rem; text-decoration: none; }
 
@@ -356,7 +378,7 @@ a:hover { text-decoration: underline; }
 	.content { padding: var(--space-6) var(--space-4); }
 	h1, h2, h3, h4, p { text-wrap: wrap; }
 	h1, .post-header h1 {
-		font-size: 1.75rem;
+		font-size: 1.62rem;
 		line-height: 1.22;
 	}
 	.post-header h1 { overflow-wrap: anywhere; }
@@ -367,7 +389,7 @@ a:hover { text-decoration: underline; }
 		font-size: 1.35rem;
 		margin-top: var(--space-7);
 	}
-	.prose > p:first-child { font-size: 1.08rem; }
+	.prose > p:first-child { font-size: 1rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -6,6 +6,7 @@
 # Build output
 /bin/
 .tmp/
+.gocache/
 node_modules/
 test-results/
 playwright-report/

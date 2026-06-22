@@ -57,6 +57,37 @@ test('post renders without horizontal overflow', async ({ page }) => {
   expect(overflow).toBeLessThanOrEqual(1);
 });
 
+test('post typography keeps a readable scale and column alignment', async ({ page }) => {
+  await page.goto(postPath);
+
+  const metrics = await page.evaluate(() => {
+    const number = (value: string) => Number.parseFloat(value);
+    const h1 = document.querySelector('h1');
+    const firstParagraph = document.querySelector('.prose > p:first-child');
+    if (!h1 || !firstParagraph) throw new Error('post content did not render');
+
+    const h1Box = h1.getBoundingClientRect();
+    const firstParagraphBox = firstParagraph.getBoundingClientRect();
+
+    return {
+      viewportWidth: document.documentElement.clientWidth,
+      rootFontSize: number(getComputedStyle(document.documentElement).fontSize),
+      bodyFontSize: number(getComputedStyle(document.body).fontSize),
+      h1FontSize: number(getComputedStyle(h1).fontSize),
+      titleLeft: h1Box.left,
+      bodyLeft: firstParagraphBox.left,
+    };
+  });
+
+  expect(metrics.rootFontSize).toBeLessThanOrEqual(16.5);
+  expect(metrics.bodyFontSize).toBeGreaterThanOrEqual(15);
+  expect(metrics.bodyFontSize).toBeLessThanOrEqual(17.5);
+
+  const maxH1FontSize = metrics.viewportWidth >= 800 ? 44 : 30;
+  expect(metrics.h1FontSize).toBeLessThanOrEqual(maxH1FontSize);
+  expect(Math.abs(metrics.titleLeft - metrics.bodyLeft)).toBeLessThanOrEqual(1);
+});
+
 test('article figures are visible and fit the viewport', async ({ page }) => {
   await page.goto(postPath);
 
