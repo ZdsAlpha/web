@@ -32,8 +32,8 @@ type urlSet struct {
 }
 
 // sitemap serves an XML sitemap listing the home page, every post (with its
-// date as lastmod) and every standalone page. Drafts are absent because the
-// production store is loaded without them.
+// latest meaningful content date as lastmod) and every standalone page. Drafts
+// are absent because the production store is loaded without them.
 func sitemap(store *content.Store, baseURL string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		set := urlSet{Xmlns: "http://www.sitemaps.org/schemas/sitemap/0.9"}
@@ -41,8 +41,12 @@ func sitemap(store *content.Store, baseURL string) http.HandlerFunc {
 
 		for _, p := range store.Posts() {
 			u := sitemapURL{Loc: baseURL + "/posts/" + p.Slug}
-			if !p.Date.IsZero() {
-				u.LastMod = p.Date.UTC().Format("2006-01-02")
+			lastMod := p.Updated
+			if lastMod.IsZero() {
+				lastMod = p.Date
+			}
+			if !lastMod.IsZero() {
+				u.LastMod = lastMod.UTC().Format("2006-01-02")
 			}
 			set.URLs = append(set.URLs, u)
 		}

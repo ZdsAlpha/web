@@ -23,6 +23,7 @@ type Head struct {
 	Path        string    // absolute path for canonical/og:url; "" omits them
 	OGType      string    // "website" (default) or "article"
 	Published   time.Time // posts only; zero => omitted
+	Modified    time.Time // posts only; zero => omitted
 	Tags        []string  // posts only; emitted as article:tag
 	JSONLD      []template.HTML
 }
@@ -57,6 +58,7 @@ func PostHead(p *content.Post) Head {
 		Path:        "/posts/" + p.Slug,
 		OGType:      "article",
 		Published:   p.Date,
+		Modified:    p.Updated,
 		Tags:        p.Tags,
 		JSONLD:      []template.HTML{blogPostingLD(p), breadcrumbLD(p.Title, "/posts/"+p.Slug)},
 	}
@@ -117,6 +119,12 @@ func blogPostingLD(p *content.Post) template.HTML {
 	}
 	if !p.Date.IsZero() {
 		m["datePublished"] = p.Date.UTC().Format(time.RFC3339)
+	}
+	if !p.Updated.IsZero() {
+		m["dateModified"] = p.Updated.UTC().Format(time.RFC3339)
+	}
+	if p.Image != "" {
+		m["image"] = canonical(p.Image)
 	}
 	return ldScript(m)
 }

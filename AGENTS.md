@@ -31,20 +31,34 @@ distroless Docker image on Fly.io.
 ## Commands
 
 ```sh
-templ generate            # after editing any view/*.templ
-go run ./tools/genchroma  # after changing the chroma theme/highlighting
-go run ./tools/genog      # after changing the og:image card design
-DEV=1 go run .            # run locally from disk (includes drafts), :8080
-BASE_URL=https://arehman.dev go run .   # override origin for canonical URLs + sitemap
-go build ./... && go vet ./...
+make generate             # regenerate templ, Chroma CSS, and the OG image offline
+make check                # formatting, module consistency, tests, and vet
+make dev                  # run locally from disk (includes drafts), :8080
+BASE_URL=https://arehman.dev make run   # override origin for canonical URLs + sitemap
 flyctl deploy --remote-only --yes   # build + deploy via Fly remote builder
 ```
+
+## Tool and network policy
+
+- `templ` is the only local executable dependency and is pinned by a `tool`
+  directive in `go.mod`. Go downloads its module once when the module cache is
+  empty and reuses the module/build caches afterward.
+- Vulnerability scanning is CI-only through a commit-pinned GitHub Action. Do
+  not add a local `govulncheck` executable or make normal development depend on
+  refreshing the online vulnerability database.
+- Do not commit `vendor/` or platform-specific tool binaries. Do not use
+  `@latest`, `go install`, or `curl` to fetch executables in project workflows.
+  Any future Go tool must use a version-pinned `tool` directive and have a clear
+  maintenance benefit.
+- The Makefile sets `GOTOOLCHAIN=local`, so commands fail with a useful version
+  error instead of automatically downloading another Go toolchain.
 
 ## Conventions & gotchas
 
 - **Generated files are committed and the Docker build does NOT run codegen.** After editing
-  `.templ` files run `templ generate`; after changing highlighting run `go run ./tools/genchroma`.
-  Commit the resulting `view/*_templ.go` and `static/css/chroma.css`, or the deployed build will be stale.
+  `.templ` files or generators run `make generate`.
+  Commit the resulting `view/*_templ.go`, `static/css/chroma.css`, and
+  `static/og/default.png`, or the deployed build will be stale.
 - The app must **listen on `0.0.0.0:$PORT`** (reads `PORT`, defaults 8080). Never bind localhost.
 - Honor `SIGTERM` for graceful shutdown (already wired in `main.go`).
 - Content is **author-trusted**: goldmark runs in safe mode (no `html.WithUnsafe`) and templ
@@ -65,8 +79,10 @@ Create `content/posts/<slug>.md` with frontmatter:
 ---
 title: "My Post"
 date: 2026-06-14
+updated: 2026-06-20 # optional; only after a substantial revision
 slug: my-post        # optional; defaults to filename
 description: "Short summary for SEO/OG."
+image: /static/img/my-post.svg # optional; root-relative article image
 tags: [go, web]
 draft: false
 ---
@@ -91,12 +107,13 @@ rest is one-time Search Console setup.
 
 - **Canonical + `og:url`** on every page (absolute, built from `BASE_URL`). 404s omit them.
 - **Open Graph**: `og:title`, `og:description`, `og:type` (`article` for posts, `website`
-  otherwise), `og:site_name`, `og:locale`. Posts add `article:published_time` and `article:tag`.
+  otherwise), `og:site_name`, `og:locale`. Posts add published/modified times and tags.
 - **`og:image`**: a shared 1200×630 card (`static/og/default.png`, regenerate via `go run ./tools/genog`)
   with `og:image:width`/`height`/`alt`; Twitter card is `summary_large_image`.
-- **JSON-LD**: `WebSite` + `Person` on the home page; `BlogPosting` + `BreadcrumbList` on posts.
+- **JSON-LD**: `WebSite` + `Person` on the home page; `BlogPosting` (including an optional
+  root-relative article `image` and meaningful `dateModified`) + `BreadcrumbList` on posts.
 - **`/robots.txt`** (allows all, links the sitemap) and **`/sitemap.xml`** (home + every post with
-  `lastmod` from frontmatter `date` + every page), generated from the content store at request time.
+  `lastmod` from `updated`, falling back to `date`, + every page), generated at request time.
 
 `BASE_URL` (default `https://arehman.dev`, trailing slash trimmed) drives every absolute URL.
 Per current Google guidance the sitemap deliberately omits `priority`/`changefreq` (ignored) and
@@ -110,8 +127,8 @@ Per current Google guidance the sitemap deliberately omits `priority`/`changefre
 3. Use URL Inspection → Request Indexing to nudge the home page + new posts. First indexing of a
    new domain realistically takes days–weeks; re-requesting does not speed it up.
 
-The `og:image` is a single shared card (no per-post images yet); add per-post cards only if social
-sharing of individual posts becomes important. `llms.txt`, the Indexing API (JobPosting/livestream
+The `og:image` is a single shared card; optional per-post `image` metadata feeds article JSON-LD.
+`llms.txt`, the Indexing API (JobPosting/livestream
 only), and `priority`/`changefreq` are intentionally **not** used.
 
 ## Constraints

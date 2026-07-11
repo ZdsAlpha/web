@@ -4,7 +4,10 @@ package web
 import (
 	"bytes"
 	"io/fs"
+	"net"
 	"net/http"
+	"net/url"
+	"strings"
 
 	"github.com/ZdsAlpha/web/internal/content"
 	"github.com/ZdsAlpha/web/view"
@@ -19,7 +22,7 @@ func Handler(store *content.Store, staticFS fs.FS, baseURL string) http.Handler 
 	mux := http.NewServeMux()
 
 	// noDirFS disables directory listings; only files are served.
-	staticSrv := http.FileServerFS(noDirFS{staticFS})
+	staticSrv := cacheStatic(http.FileServerFS(noDirFS{staticFS}))
 	mux.Handle("GET /static/", http.StripPrefix("/static/", staticSrv))
 
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {
@@ -54,18 +57,54 @@ func Handler(store *content.Store, staticFS fs.FS, baseURL string) http.Handler 
 		render(w, r, http.StatusOK, view.Page(p))
 	})
 
-	return securityHeaders(mux)
+	return securityHeaders(canonicalHostRedirect(mux, baseURL))
+}
+
+// canonicalHostRedirect permanently redirects the conventional www alias to
+// the configured canonical origin. Other hosts (including local development)
+// pass through unchanged.
+func canonicalHostRedirect(next http.Handler, baseURL string) http.Handler {
+	origin, err := url.Parse(baseURL)
+	if err != nil || origin.Scheme == "" || origin.Hostname() == "" {
+		return next
+	}
+	wwwHost := "www." + origin.Hostname()
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requestHost := r.Host
+		if host, _, err := net.SplitHostPort(requestHost); err == nil {
+			requestHost = host
+		}
+		if !strings.EqualFold(requestHost, wwwHost) {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		target := *r.URL
+		target.Scheme = origin.Scheme
+		target.Host = origin.Host
+		http.Redirect(w, r, target.String(), http.StatusPermanentRedirect)
+	})
+}
+
+// cacheStatic allows short-lived browser and edge caching without requiring
+// fingerprinted filenames. An hour keeps deploys responsive while avoiding a
+// full asset transfer on every page view.
+func cacheStatic(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "public, max-age=3600")
+		next.ServeHTTP(w, r)
+	})
 }
 
 // securityHeaders sets conservative security headers on every response. The CSP
-// allows only same-origin resources plus Google Fonts; there are no inline
-// scripts or styles (the theme bootstrap lives in /static/js/theme-init.js),
-// so no hashes/nonces are needed.
+// allows only same-origin resources; there are no inline scripts or styles (the
+// theme bootstrap lives in /static/js/theme-init.js), so no hashes/nonces are
+// needed.
 func securityHeaders(next http.Handler) http.Handler {
 	const csp = "default-src 'self'; " +
 		"script-src 'self'; " +
-		"style-src 'self' https://fonts.googleapis.com; " +
-		"font-src https://fonts.gstatic.com; " +
+		"style-src 'self'; " +
+		"font-src 'self'; " +
 		"img-src 'self' data:; " +
 		"base-uri 'none'; " +
 		"frame-ancestors 'none'; " +

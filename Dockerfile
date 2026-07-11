@@ -1,6 +1,6 @@
 # ---- Build stage ----
 # Pinned to a patched Go release; bump as new patches ship.
-FROM golang:1.26.3 AS build
+FROM golang:1.26.5 AS build
 WORKDIR /src
 
 # Cache dependencies first.

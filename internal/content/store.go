@@ -2,8 +2,8 @@ package content
 
 import (
 	"fmt"
-	"io/fs"
 	"html/template"
+	"io/fs"
 	"path"
 	"regexp"
 	"sort"
@@ -46,6 +46,14 @@ func Load(fsys fs.FS, includeDrafts bool) (*Store, error) {
 		}
 		return s.posts[i].Date.After(s.posts[j].Date)
 	})
+	for _, posts := range s.tagToPosts {
+		sort.Slice(posts, func(i, j int) bool {
+			if posts[i].Date.Equal(posts[j].Date) {
+				return posts[i].Slug < posts[j].Slug
+			}
+			return posts[i].Date.After(posts[j].Date)
+		})
+	}
 
 	return s, nil
 }
@@ -72,6 +80,13 @@ func (s *Store) loadPosts(fsys fs.FS, r *renderer, includeDrafts bool) error {
 		if err != nil {
 			return fmt.Errorf("%s: %w", p, err)
 		}
+		updated, err := parseOptionalDate(m.Updated)
+		if err != nil {
+			return fmt.Errorf("%s: updated: %w", p, err)
+		}
+		if !updated.IsZero() && updated.Before(date) {
+			return fmt.Errorf("%s: updated date must not precede published date", p)
+		}
 
 		html, err := r.render(body)
 		if err != nil {
@@ -79,6 +94,9 @@ func (s *Store) loadPosts(fsys fs.FS, r *renderer, includeDrafts bool) error {
 		}
 
 		slug := slugFor(m.Slug, p)
+		if err := validateSlug(slug); err != nil {
+			return fmt.Errorf("%s: %w", p, err)
+		}
 		if _, dup := s.postBySlug[slug]; dup {
 			return fmt.Errorf("%s: duplicate slug %q", p, slug)
 		}
@@ -92,7 +110,9 @@ func (s *Store) loadPosts(fsys fs.FS, r *renderer, includeDrafts bool) error {
 				RawText: raw,
 			},
 			Date:        date,
+			Updated:     updated,
 			Description: m.Description,
+			Image:       m.Image,
 			Tags:        m.Tags,
 			Draft:       m.Draft,
 			Summary:     summaryFor(m.Summary, m.Description, raw),
@@ -126,6 +146,9 @@ func (s *Store) loadPages(fsys fs.FS, r *renderer) error {
 			return fmt.Errorf("%s: render: %w", p, err)
 		}
 		slug := slugFor(m.Slug, p)
+		if err := validateSlug(slug); err != nil {
+			return fmt.Errorf("%s: %w", p, err)
+		}
 		if _, dup := s.pageBySlug[slug]; dup {
 			return fmt.Errorf("%s: duplicate slug %q", p, slug)
 		}
@@ -189,18 +212,26 @@ func readDoc(fsys fs.FS, p string, m *meta) ([]byte, error) {
 }
 
 var nonSlug = regexp.MustCompile(`[^a-z0-9]+`)
+var validSlug = regexp.MustCompile(`^[a-z0-9]+(?:-[a-z0-9]+)*$`)
 
 // slugFor uses the frontmatter slug if set, else derives one from the
 // filename, stripping a leading YYYY-MM-DD- date prefix if present.
 func slugFor(fmSlug, filePath string) string {
 	if fmSlug != "" {
-		return fmSlug
+		return strings.TrimSpace(fmSlug)
 	}
 	name := strings.TrimSuffix(path.Base(filePath), ".md")
 	name = regexp.MustCompile(`^\d{4}-\d{2}-\d{2}-`).ReplaceAllString(name, "")
 	name = strings.ToLower(name)
 	name = nonSlug.ReplaceAllString(name, "-")
 	return strings.Trim(name, "-")
+}
+
+func validateSlug(slug string) error {
+	if !validSlug.MatchString(slug) {
+		return fmt.Errorf("invalid slug %q (use lowercase letters, numbers, and single hyphens)", slug)
+	}
+	return nil
 }
 
 func parseDate(s string) (time.Time, error) {
@@ -214,6 +245,13 @@ func parseDate(s string) (time.Time, error) {
 		}
 	}
 	return time.Time{}, fmt.Errorf("unparseable date %q", s)
+}
+
+func parseOptionalDate(s string) (time.Time, error) {
+	if strings.TrimSpace(s) == "" {
+		return time.Time{}, nil
+	}
+	return parseDate(s)
 }
 
 func readingMinutes(raw string) int {

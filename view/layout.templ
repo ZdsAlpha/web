@@ -26,6 +26,9 @@ templ Layout(h Head) {
 			if !h.Published.IsZero() {
 				<meta property="article:published_time" content={ h.Published.UTC().Format(time.RFC3339) }/>
 			}
+			if !h.Modified.IsZero() {
+				<meta property="article:modified_time" content={ h.Modified.UTC().Format(time.RFC3339) }/>
+			}
 			for _, t := range h.Tags {
 				<meta property="article:tag" content={ t }/>
 			}
@@ -39,12 +42,7 @@ templ Layout(h Head) {
 			for _, block := range h.JSONLD {
 				@templ.Raw(string(block))
 			}
-			<link rel="preconnect" href="https://fonts.googleapis.com"/>
-			<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-			<link
-				rel="stylesheet"
-				href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap"
-			/>
+			<link rel="icon" href="/static/favicon.svg" type="image/svg+xml"/>
 			<link rel="stylesheet" href="/static/css/vendor/pico.classless.min.css"/>
 			<link rel="stylesheet" href="/static/css/style.css"/>
 			<link rel="stylesheet" href="/static/css/chroma.css"/>

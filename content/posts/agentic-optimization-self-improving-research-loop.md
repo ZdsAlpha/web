@@ -1,8 +1,10 @@
 ---
 title: "Agentic Optimization: A Self-Improving AI Research Loop"
 date: 2026-06-22
+updated: 2026-07-11
 slug: agentic-optimization-self-improving-research-loop
 description: "How an agentic optimization loop used AI agents, held-out BPB, and a research ledger to improve a byte-level model from 1.871 to 1.604 BPB."
+image: /static/img/agentic-optimization-loop.svg
 tags: [ai, agents, optimization, research, machine-learning]
 draft: false
 summary: "A practical agentic optimization loop: agents proposed language-model experiments, a strict evaluator scored BPB, and a ledger made each round smarter."

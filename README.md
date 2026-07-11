@@ -26,11 +26,28 @@ tools/dns            manages Porkbun DNS records
 
 ## Develop
 
+Required CLI tools:
+
 ```sh
-templ generate            # regenerate view/*_templ.go after editing .templ
-go run ./tools/genchroma  # regenerate syntax-highlighting CSS
-DEV=1 go run .            # serve from disk (includes drafts), :8080
+brew install go flyctl
 ```
+
+The repository pins `templ` as a Go tool dependency, so no global installation
+is needed. Go downloads it once when the module cache is empty, then reuses the
+local build cache. Vulnerability scanning runs only in GitHub CI, so normal
+local work does not download or run a separate scanner. Automatic Go toolchain
+downloads are disabled by the Makefile. Docker is optional because Fly uses a
+remote builder.
+
+```sh
+make generate             # regenerate all committed generated assets
+make check                # formatting, module, test, and vet checks
+make dev                  # serve from disk (includes drafts), :8080
+```
+
+The first run on a fresh machine may download declared Go modules. Subsequent
+runs use Go's module and build caches. Project commands never use `@latest` or
+install an unversioned executable.
 
 `DEV=1` reads `content/` and `static/` from disk and includes drafts. Without
 it, both are served from the embedded copies and drafts are hidden.
@@ -43,14 +60,20 @@ Add `content/posts/my-post.md`:
 ---
 title: "My Post"
 date: 2026-06-14
+updated: 2026-06-20 # optional; only after a substantial revision
 slug: my-post        # optional; defaults to filename
 description: "Short summary for SEO/OG."
+image: /static/img/my-post.svg # optional; root-relative article image
 tags: [go, web]
 draft: false
 ---
 
 Body in **markdown**.
 ```
+
+Markdown images automatically receive lazy-loading and asynchronous decoding
+hints. Keep SVG figures self-contained (no remote fonts or images) and include
+intrinsic `width`, `height`, and `viewBox` attributes.
 
 ## Deploy (Fly.io)
 
@@ -59,8 +82,18 @@ fly launch --no-deploy   # first time: creates the app from fly.toml
 fly deploy               # builds via Dockerfile on Fly's remote builder
 ```
 
-The Dockerfile runs `templ generate` + `genchroma` then builds a static binary
-into a distroless image. No local Docker required — Fly builds remotely.
+Generated templ files, Chroma CSS, and the social image are committed;
+regenerate them before deploying after source changes. The Dockerfile builds a
+static binary into a distroless image. No local Docker installation is required
+because Fly builds remotely.
+
+## Maintenance
+
+CI runs formatting, generated-file, module, race-test, vet, and vulnerability
+checks for every pull request. Dependabot checks Go modules, GitHub Actions, and
+Docker images weekly. Review dependency updates as normal code changes: read
+release notes, run `go mod tidy` and `make generate check`, then commit
+`go.mod`, `go.sum`, and regenerated assets together.
 
 ## Custom domain + TLS
 

@@ -4,10 +4,13 @@ import (
 	"bytes"
 
 	"github.com/alecthomas/chroma/v2/formatters/html"
-	highlighting "github.com/yuin/goldmark-highlighting/v2"
 	"github.com/yuin/goldmark"
+	highlighting "github.com/yuin/goldmark-highlighting/v2"
+	"github.com/yuin/goldmark/ast"
 	"github.com/yuin/goldmark/extension"
 	"github.com/yuin/goldmark/parser"
+	"github.com/yuin/goldmark/text"
+	"github.com/yuin/goldmark/util"
 	"go.abhg.dev/goldmark/anchor"
 )
 
@@ -37,11 +40,28 @@ func newRenderer() *renderer {
 		),
 		goldmark.WithParserOptions(
 			parser.WithAutoHeadingID(), // deterministic heading IDs for anchors
+			parser.WithASTTransformers(
+				util.Prioritized(imageAttributeTransformer{}, 100),
+			),
 		),
 		// Note: WithUnsafe() is intentionally NOT set. goldmark escapes raw
 		// HTML by default, which is the safe choice for authored content.
 	)
 	return &renderer{md: md}
+}
+
+// imageAttributeTransformer keeps authored Markdown terse while ensuring
+// below-the-fold article images do not block initial rendering or decoding.
+type imageAttributeTransformer struct{}
+
+func (imageAttributeTransformer) Transform(doc *ast.Document, _ text.Reader, _ parser.Context) {
+	_ = ast.Walk(doc, func(n ast.Node, entering bool) (ast.WalkStatus, error) {
+		if entering && n.Kind() == ast.KindImage {
+			n.SetAttributeString("loading", "lazy")
+			n.SetAttributeString("decoding", "async")
+		}
+		return ast.WalkContinue, nil
+	})
 }
 
 // render converts markdown source to HTML.

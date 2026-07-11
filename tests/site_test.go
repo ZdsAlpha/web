@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/ZdsAlpha/web/internal/content"
 	"github.com/ZdsAlpha/web/internal/web"
@@ -42,6 +43,10 @@ func TestPublishedContentRoutesAndAssets(t *testing.T) {
 
 			body := rec.Body.String()
 			requireContains(t, body, `<meta name="viewport" content="width=device-width, initial-scale=1">`)
+			requireContains(t, body, `<link rel="icon" href="/static/favicon.svg" type="image/svg+xml">`)
+			if strings.Contains(body, "fonts.googleapis.com") || strings.Contains(body, "fonts.gstatic.com") {
+				t.Fatal("page should not disclose visitor requests to third-party font hosts")
+			}
 			if route != "/" {
 				requireContains(t, body, `<link rel="canonical" href="https://arehman.dev`)
 			}
@@ -49,6 +54,40 @@ func TestPublishedContentRoutesAndAssets(t *testing.T) {
 				request(t, site.handler, assetPath, http.StatusOK)
 			}
 		})
+	}
+}
+
+func TestPostSEOAndImageLoadingMetadata(t *testing.T) {
+	site := newTestSite(t)
+	for _, post := range site.store.Posts() {
+		rec := request(t, site.handler, "/posts/"+post.Slug, http.StatusOK)
+		body := rec.Body.String()
+		if post.Image != "" {
+			requireContains(t, body, `"image":"https://arehman.dev`+post.Image+`"`)
+		}
+		if !post.Updated.IsZero() {
+			requireContains(t, body, `"dateModified":"`+post.Updated.UTC().Format(time.RFC3339)+`"`)
+			requireContains(t, body, `<meta property="article:modified_time" content="`+post.Updated.UTC().Format(time.RFC3339)+`">`)
+		}
+		if strings.Contains(body, `<img `) {
+			requireContains(t, body, `loading="lazy"`)
+			requireContains(t, body, `decoding="async"`)
+		}
+	}
+}
+
+func TestWWWRedirectAndStaticCaching(t *testing.T) {
+	site := newTestSite(t)
+	req := httptest.NewRequest(http.MethodGet, "https://www.arehman.dev/path?q=1", nil)
+	rec := httptest.NewRecorder()
+	site.handler.ServeHTTP(rec, req)
+	if rec.Code != http.StatusPermanentRedirect || rec.Header().Get("Location") != "https://arehman.dev/path?q=1" {
+		t.Fatalf("www redirect status=%d location=%q", rec.Code, rec.Header().Get("Location"))
+	}
+
+	asset := request(t, site.handler, "/static/favicon.svg", http.StatusOK)
+	if got := asset.Header().Get("Cache-Control"); got != "public, max-age=3600" {
+		t.Fatalf("favicon Cache-Control=%q", got)
 	}
 }
 

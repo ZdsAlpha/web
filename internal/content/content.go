@@ -21,7 +21,9 @@ type Document struct {
 type Post struct {
 	Document
 	Date        time.Time
+	Updated     time.Time
 	Description string
+	Image       string
 	Tags        []string
 	Draft       bool
 	Summary     string
@@ -38,8 +40,10 @@ type Page struct {
 type meta struct {
 	Title       string   `yaml:"title"`
 	Date        string   `yaml:"date"`
+	Updated     string   `yaml:"updated"`
 	Slug        string   `yaml:"slug"`
 	Description string   `yaml:"description"`
+	Image       string   `yaml:"image"`
 	Tags        []string `yaml:"tags"`
 	Draft       bool     `yaml:"draft"`
 	Summary     string   `yaml:"summary"`

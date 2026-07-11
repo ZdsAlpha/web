@@ -13,6 +13,10 @@ templ Post(p *content.Post) {
 				<h1>{ p.Title }</h1>
 				<div class="post-meta">
 					<time datetime={ p.Date.Format("2006-01-02") }>{ p.Date.Format("Jan 2, 2006") }</time>
+					if !p.Updated.IsZero() && !p.Updated.Equal(p.Date) {
+						<span class="dot">·</span>
+						<span>Updated <time datetime={ p.Updated.Format("2006-01-02") }>{ p.Updated.Format("Jan 2, 2006") }</time></span>
+					}
 					<span class="dot">·</span>
 					<span>{ readMinsLabel(p.ReadingMins) }</span>
 				</div>

@@ -121,18 +121,61 @@ func apply(c creds, v4, v6, www string) {
 		check(del(c, r.ID))
 	}
 	if v4 != "" {
-		fmt.Printf("creating A %s -> %s...\n", domain, v4)
-		check(create(c, "", "A", v4))
+		check(ensureRecord(c, records, "", "A", v4))
 	}
 	if v6 != "" {
-		fmt.Printf("creating AAAA %s -> %s...\n", domain, v6)
-		check(create(c, "", "AAAA", v6))
+		check(ensureRecord(c, records, "", "AAAA", v6))
 	}
 	if www != "" {
-		fmt.Printf("creating CNAME www -> %s...\n", www)
-		check(create(c, "www", "CNAME", www))
+		check(ensureRecord(c, records, "www", "CNAME", www))
 	}
 	fmt.Println("done. Verify with `go run ./tools/dns list` and `fly certs check`.")
+}
+
+// ensureRecord makes one name/type pair match the desired value. It edits an
+// existing record where possible, removes duplicates, and is a no-op when the
+// record is already correct, making repeated apply runs safe.
+func ensureRecord(c creds, records []record, name, typ, content string) error {
+	var matches []record
+	for _, r := range records {
+		if r.Type == typ && sameName(r.Name, name) {
+			matches = append(matches, r)
+		}
+	}
+	if len(matches) == 0 {
+		fmt.Printf("creating %s %s -> %s...\n", typ, displayName(name), content)
+		return create(c, name, typ, content)
+	}
+	if matches[0].Content != content || matches[0].TTL != ttl {
+		fmt.Printf("updating %s %s -> %s...\n", typ, displayName(name), content)
+		if err := edit(c, matches[0].ID, name, typ, content); err != nil {
+			return err
+		}
+	} else {
+		fmt.Printf("unchanged %s %s -> %s\n", typ, displayName(name), content)
+	}
+	for _, duplicate := range matches[1:] {
+		fmt.Printf("deleting duplicate %s %s (id %s)...\n", typ, displayName(name), duplicate.ID)
+		if err := del(c, duplicate.ID); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func sameName(got, relative string) bool {
+	want := domain
+	if relative != "" {
+		want = relative + "." + domain
+	}
+	return got == relative || got == want
+}
+
+func displayName(name string) string {
+	if name == "" {
+		return domain
+	}
+	return name + "." + domain
 }
 
 // parking returns the default Porkbun records that point at pixie.porkbun.com:
@@ -175,6 +218,21 @@ func create(c creds, name, typ, content string) error {
 	}
 	if resp.Status != "SUCCESS" {
 		return fmt.Errorf("create %s %s: %s", typ, name, resp.Message)
+	}
+	return nil
+}
+
+func edit(c creds, id, name, typ, content string) error {
+	body := map[string]string{"name": name, "type": typ, "content": content, "ttl": ttl}
+	var resp struct {
+		Status  string `json:"status"`
+		Message string `json:"message"`
+	}
+	if err := post("/dns/edit/"+domain+"/"+id, c, body, &resp); err != nil {
+		return err
+	}
+	if resp.Status != "SUCCESS" {
+		return fmt.Errorf("edit %s %s: %s", typ, name, resp.Message)
 	}
 	return nil
 }
