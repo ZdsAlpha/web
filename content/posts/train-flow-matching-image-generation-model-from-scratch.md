@@ -30,9 +30,9 @@ reconstruction.
 | Final velocity magnitude ratio | 0.670 |
 | VAE reconstruction PSNR | 26.9 dB |
 
-![Samples from the final 10,000-epoch flow matching checkpoint](/static/img/flow-matching-anime-samples-10000.png)
+![Samples from the final 10,000-epoch flow matching checkpoint at temperature 0.6](/static/img/flow-matching-anime-samples-10000.png)
 
-*Final-checkpoint samples generated with EMA weights and Heun integration.*
+*Final-checkpoint samples generated with EMA weights, Heun integration, and temperature `0.6`.*
 
 ## How Flow Matching Image Generation Works
 
