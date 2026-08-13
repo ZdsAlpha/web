@@ -224,13 +224,19 @@ func Layout(h Head) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
+		if h.NoIndex {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "<meta name=\"robots\" content=\"noindex, nofollow, noarchive\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
 		for _, block := range h.JSONLD {
 			templ_7745c5c3_Err = templ.Raw(string(block)).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "<link rel=\"icon\" href=\"/static/favicon.svg\" type=\"image/svg+xml\"><link rel=\"stylesheet\" href=\"/static/css/vendor/pico.classless.min.css\"><link rel=\"stylesheet\" href=\"/static/css/style.css\"><link rel=\"stylesheet\" href=\"/static/css/chroma.css\"><script src=\"/static/js/theme-init.js\"></script></head><body><header class=\"site-header\"><nav class=\"nav\"><a class=\"brand\" href=\"/\">arehman.dev</a><div class=\"nav-links\"><a href=\"/\">Writing</a> <a href=\"/about\">About</a> <button id=\"theme-toggle\" class=\"theme-toggle\" type=\"button\" aria-label=\"Toggle theme\">◐</button></div></nav></header><main class=\"content\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "<link rel=\"icon\" href=\"/static/favicon.svg\" type=\"image/svg+xml\"><link rel=\"stylesheet\" href=\"/static/css/vendor/pico.classless.min.css\"><link rel=\"stylesheet\" href=\"/static/css/style.css\"><link rel=\"stylesheet\" href=\"/static/css/chroma.css\"><script src=\"/static/js/theme-init.js\"></script></head><body><header class=\"site-header\"><nav class=\"nav\"><a class=\"brand\" href=\"/\">arehman.dev</a><div class=\"nav-links\"><a href=\"/\">Writing</a> <a href=\"/about\">About</a> <button id=\"theme-toggle\" class=\"theme-toggle\" type=\"button\" aria-label=\"Toggle theme\">◐</button></div></nav></header><main class=\"content\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -238,7 +244,7 @@ func Layout(h Head) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "</main><footer class=\"site-footer\"><span>© 2026 Abdul Rahman</span> <a href=\"https://github.com/ZdsAlpha\">GitHub</a></footer><script src=\"/static/js/theme.js\"></script></body></html>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "</main><footer class=\"site-footer\"><span>© 2026 Abdul Rahman</span> <a href=\"https://github.com/ZdsAlpha\">GitHub</a></footer><script src=\"/static/js/theme.js\"></script></body></html>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

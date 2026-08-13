@@ -39,6 +39,9 @@ templ Layout(h Head) {
 				<meta property="og:image:alt" content="arehman.dev — Notes on software, systems, and building things."/>
 			}
 			<meta name="twitter:card" content="summary_large_image"/>
+			if h.NoIndex {
+				<meta name="robots" content="noindex, nofollow, noarchive"/>
+			}
 			for _, block := range h.JSONLD {
 				@templ.Raw(string(block))
 			}

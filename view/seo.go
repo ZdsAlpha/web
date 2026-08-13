@@ -21,6 +21,7 @@ type Head struct {
 	Title       string
 	Description string
 	Path        string    // absolute path for canonical/og:url; "" omits them
+	NoIndex     bool      // emit noindex for private, unlinked workspaces
 	OGType      string    // "website" (default) or "article"
 	Published   time.Time // posts only; zero => omitted
 	Modified    time.Time // posts only; zero => omitted
@@ -70,6 +71,16 @@ func PageHead(p *content.Page) Head {
 		Title:       p.Title + " — " + authorName,
 		Description: p.Description,
 		Path:        "/" + p.Slug,
+	}
+}
+
+// VaultHead describes the private browser-only vault workspace. It is not
+// canonicalized or included in the content sitemap, and the noindex directive
+// gives crawlers an additional reason not to surface the unlinked route.
+func VaultHead() Head {
+	return Head{
+		Title:   "S3 Zero — Local Vault",
+		NoIndex: true,
 	}
 }
 

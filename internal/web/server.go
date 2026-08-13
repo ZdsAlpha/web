@@ -19,45 +19,7 @@ import (
 // is the site's absolute origin (e.g. "https://arehman.dev"), used to emit
 // robots.txt and an absolute-URL sitemap.
 func Handler(store *content.Store, staticFS fs.FS, baseURL string) http.Handler {
-	mux := http.NewServeMux()
-
-	// noDirFS disables directory listings; only files are served.
-	staticSrv := cacheStatic(http.FileServerFS(noDirFS{staticFS}))
-	mux.Handle("GET /static/", http.StripPrefix("/static/", staticSrv))
-
-	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte("ok"))
-	})
-
-	mux.HandleFunc("GET /robots.txt", robots(baseURL))
-	mux.HandleFunc("GET /sitemap.xml", sitemap(store, baseURL))
-
-	mux.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request) {
-		render(w, r, http.StatusOK, view.Home(store.Posts()))
-	})
-
-	mux.HandleFunc("GET /posts/{slug}", func(w http.ResponseWriter, r *http.Request) {
-		p, ok := store.Post(r.PathValue("slug"))
-		if !ok {
-			notFound(w, r)
-			return
-		}
-		render(w, r, http.StatusOK, view.Post(p))
-	})
-
-	// Standalone pages live at the root (e.g. /about). Registered as a
-	// catch-all so it runs last; unknown slugs fall through to 404.
-	mux.HandleFunc("GET /{slug}", func(w http.ResponseWriter, r *http.Request) {
-		p, ok := store.Page(r.PathValue("slug"))
-		if !ok {
-			notFound(w, r)
-			return
-		}
-		render(w, r, http.StatusOK, view.Page(p))
-	})
-
-	return securityHeaders(canonicalHostRedirect(mux, baseURL))
+	return HandlerWithVault(store, staticFS, baseURL, nil)
 }
 
 // canonicalHostRedirect permanently redirects the conventional www alias to
@@ -87,19 +49,24 @@ func canonicalHostRedirect(next http.Handler, baseURL string) http.Handler {
 }
 
 // cacheStatic allows short-lived browser and edge caching without requiring
-// fingerprinted filenames. An hour keeps deploys responsive while avoiding a
-// full asset transfer on every page view.
+// fingerprinted filenames. The vault client is deliberately revalidated: it
+// stores browser-local state and must not be paired with stale markup after a
+// deploy.
 func cacheStatic(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Cache-Control", "public, max-age=3600")
+		// staticSrv is mounted behind http.StripPrefix("/static/", ...), which
+		// supplies the remaining path without its leading slash.
+		if strings.TrimPrefix(r.URL.Path, "/") == "js/vault.js" {
+			w.Header().Set("Cache-Control", "no-cache")
+		} else {
+			w.Header().Set("Cache-Control", "public, max-age=3600")
+		}
 		next.ServeHTTP(w, r)
 	})
 }
 
-// securityHeaders sets conservative security headers on every response. The CSP
-// allows only same-origin resources; there are no inline scripts or styles (the
-// theme bootstrap lives in /static/js/theme-init.js), so no hashes/nonces are
-// needed.
+// securityHeaders sets conservative security headers on every public response.
+// Vault-specific connect permissions are applied only to /vault documents.
 func securityHeaders(next http.Handler) http.Handler {
 	const csp = "default-src 'self'; " +
 		"script-src 'self'; " +
@@ -115,6 +82,26 @@ func securityHeaders(next http.Handler) http.Handler {
 		h.Set("X-Content-Type-Options", "nosniff")
 		h.Set("X-Frame-Options", "DENY")
 		h.Set("Referrer-Policy", "strict-origin-when-cross-origin")
+		next.ServeHTTP(w, r)
+	})
+}
+
+// vaultSecurityHeaders extends the public CSP only for the isolated vault
+// document. Storage providers must still allow the origin with CORS.
+func vaultSecurityHeaders(next http.Handler) http.Handler {
+	const csp = "default-src 'self'; " +
+		"script-src 'self'; " +
+		"style-src 'self'; " +
+		"font-src 'self'; " +
+		"img-src 'self' data: blob:; " +
+		"connect-src 'self' https:; " +
+		"media-src 'self' blob:; " +
+		"worker-src 'self' blob:; " +
+		"base-uri 'none'; " +
+		"frame-ancestors 'none'; " +
+		"form-action 'self'"
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Security-Policy", csp)
 		next.ServeHTTP(w, r)
 	})
 }
