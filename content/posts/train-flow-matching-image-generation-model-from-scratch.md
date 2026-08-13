@@ -113,18 +113,20 @@ The VAE reconstruction score of 26.9 dB also showed that the latent codec was
 not the main bottleneck. The remaining softness and structural errors came
 primarily from the learned velocity field.
 
-## What I Would Keep
+## A Practical Recipe
 
-The compact recipe is straightforward:
+For a compact Flow Matching image generator, the reusable recipe is:
 
-- train in a good VAE latent space
-- regress the straight-path velocity with MSE
-- monitor cosine direction, magnitude calibration, and sample quality
-- use optimal-transport pairing and simple augmentation
-- sample EMA weights with a second-order ODE solver
-- invert real data to check whether the learned prior really matches `N(0,I)`
+- encode images into a stable latent space and standardize its channels
+- train the velocity field from random initialization with straight-path MSE
+- use noise–data pairings and lightweight augmentation to make the transport
+  problem easier
+- keep exponential-moving-average weights for sampling
+- use a second-order ODE solver such as Heun at inference time
+- measure direction, magnitude calibration, sample quality, and reversibility
+  instead of relying on loss alone
 
-Flow matching is appealing because the core objective is small enough to fit in
-a few equations. The difficult part is not the loss function; it is making the
-learned transport field cover the full data and noise distributions. Even at
-this scale, careful pairing, diagnostics, and sampling made a visible difference.
+The core objective fits in a few equations. The engineering challenge is making
+the learned transport field cover the full data and noise distributions. A good
+latent space, well-conditioned paths, and explicit diagnostics do more for a
+small model than adding complexity without a measurement plan.
