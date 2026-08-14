@@ -56,9 +56,10 @@ func cacheStatic(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// staticSrv is mounted behind http.StripPrefix("/static/", ...), which
 		// supplies the remaining path without its leading slash.
-		if strings.TrimPrefix(r.URL.Path, "/") == "js/vault.js" {
+		switch strings.TrimPrefix(r.URL.Path, "/") {
+		case "js/vault.js", "css/style.css":
 			w.Header().Set("Cache-Control", "no-cache")
-		} else {
+		default:
 			w.Header().Set("Cache-Control", "public, max-age=3600")
 		}
 		next.ServeHTTP(w, r)

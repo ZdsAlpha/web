@@ -122,16 +122,18 @@ func TestStaticAssetsAreCached(t *testing.T) {
 	}
 }
 
-func TestVaultScriptIsRevalidated(t *testing.T) {
+func TestVaultAssetsAreRevalidated(t *testing.T) {
 	t.Parallel()
 
 	h := http.StripPrefix("/static/", cacheStatic(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		_, _ = w.Write([]byte("vault"))
 	})))
-	rec := httptest.NewRecorder()
-	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/static/js/vault.js", nil))
-	if got, want := rec.Header().Get("Cache-Control"), "no-cache"; got != want {
-		t.Fatalf("Cache-Control = %q; want %q", got, want)
+	for _, path := range []string{"/static/js/vault.js", "/static/css/style.css"} {
+		rec := httptest.NewRecorder()
+		h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, path, nil))
+		if got, want := rec.Header().Get("Cache-Control"), "no-cache"; got != want {
+			t.Errorf("%s Cache-Control = %q; want %q", path, got, want)
+		}
 	}
 }
 

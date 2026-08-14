@@ -236,7 +236,7 @@ func Layout(h Head) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "<link rel=\"icon\" href=\"/static/favicon.svg\" type=\"image/svg+xml\"><link rel=\"stylesheet\" href=\"/static/css/vendor/pico.classless.min.css\"><link rel=\"stylesheet\" href=\"/static/css/style.css\"><link rel=\"stylesheet\" href=\"/static/css/chroma.css\"><script src=\"/static/js/theme-init.js\"></script></head><body><header class=\"site-header\"><nav class=\"nav\"><a class=\"brand\" href=\"/\">arehman.dev</a><div class=\"nav-links\"><a href=\"/\">Writing</a> <a href=\"/about\">About</a> <button id=\"theme-toggle\" class=\"theme-toggle\" type=\"button\" aria-label=\"Toggle theme\">◐</button></div></nav></header><main class=\"content\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "<link rel=\"icon\" href=\"/static/favicon.svg\" type=\"image/svg+xml\"><link rel=\"stylesheet\" href=\"/static/css/vendor/pico.classless.min.css\"><link rel=\"stylesheet\" href=\"/static/css/style.css?v=2\"><link rel=\"stylesheet\" href=\"/static/css/chroma.css\"><script src=\"/static/js/theme-init.js\"></script></head><body><header class=\"site-header\"><nav class=\"nav\"><a class=\"brand\" href=\"/\">arehman.dev</a><div class=\"nav-links\"><a href=\"/\">Writing</a> <a href=\"/about\">About</a> <button id=\"theme-toggle\" class=\"theme-toggle\" type=\"button\" aria-label=\"Toggle theme\">◐</button></div></nav></header><main class=\"content\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
