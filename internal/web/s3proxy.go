@@ -21,9 +21,8 @@ import (
 // storage provider does not allow CORS. Credentials are accepted per request,
 // never persisted, and are never placed in a URL or response.
 type s3Proxy struct {
-	enabled     bool
-	accessToken string
-	client      *http.Client
+	enabled bool
+	client  *http.Client
 }
 
 type s3ProxyRequest struct {
@@ -39,14 +38,13 @@ type s3ProxyRequest struct {
 	Query           [][]string `json:"query"`
 }
 
-func newS3Proxy(enabled bool, accessToken string, client *http.Client) *s3Proxy {
+func newS3Proxy(enabled bool, client *http.Client) *s3Proxy {
 	if client == nil {
 		client = &http.Client{Transport: safeS3Transport()}
 	}
 	return &s3Proxy{
-		enabled:     enabled && accessToken != "",
-		accessToken: accessToken,
-		client:      client,
+		enabled: enabled,
+		client:  client,
 	}
 }
 
@@ -70,12 +68,6 @@ func (p *s3Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	if !tokenMatches(r.Header.Get("X-Vault-Access-Token"), p.accessToken) {
-		// Do not distinguish an invalid gate token from an unmounted proxy.
-		http.NotFound(w, r)
-		return
-	}
-
 	var request s3ProxyRequest
 	decoder := json.NewDecoder(http.MaxBytesReader(w, r.Body, 64<<10))
 	if err := decoder.Decode(&request); err != nil {

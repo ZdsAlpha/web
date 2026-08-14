@@ -109,7 +109,7 @@ func NewVaultProxy(cfg VaultConfig) http.Handler {
 			authorize:   firstNonEmpty(cfg.AuthorizeURL, defaultB2AuthorizeURL),
 			httpClient:  firstHTTPClient(cfg.HTTPClient),
 		},
-		s3: newS3Proxy(cfg.S3ProxyEnabled, cfg.AccessToken, cfg.HTTPClient),
+		s3: newS3Proxy(cfg.S3ProxyEnabled, cfg.HTTPClient),
 	}
 	proxy.enabled = proxy.accessToken != "" && proxy.bucket != "" && proxy.b2.keyID != "" && proxy.b2.application != ""
 	return proxy

@@ -40,7 +40,6 @@
 		modeDirect: document.getElementById("vault-mode-direct"),
 		modeProxy: document.getElementById("vault-mode-proxy"),
 		proxyModeMessage: document.getElementById("proxy-mode-message"),
-		proxyTokenField: document.getElementById("proxy-token-field"),
 		advancedSettings: document.getElementById("advanced-s3-settings"),
 		connectionState: document.getElementById("connection-state"),
 		connectionMessage: document.getElementById("connection-message"),
@@ -90,7 +89,6 @@
 			accessKeyId: document.getElementById("vault-access-key"),
 			secretAccessKey: document.getElementById("vault-secret-key"),
 			sessionToken: document.getElementById("vault-session-token"),
-			proxyAccessToken: document.getElementById("vault-proxy-token"),
 			pathStyle: document.getElementById("vault-path-style"),
 			transportMode: document.querySelectorAll('input[name="transportMode"]')
 		}
@@ -227,7 +225,6 @@
 			accessKeyId: "",
 			secretAccessKey: "",
 			sessionToken: "",
-			proxyAccessToken: "",
 			pathStyle: false,
 			transportMode: "direct",
 			buckets: [],
@@ -253,8 +250,7 @@
 
 	function secretLabel(id) {
 		if (id === "vault-secret-key") return "secret access key";
-		if (id === "vault-session-token") return "session token";
-		return "server proxy access token";
+		return "session token";
 	}
 
 	function normalizeMaster(master) {
@@ -294,7 +290,6 @@
 			accessKeyId: stringValue(raw.accessKeyId).trim(),
 			secretAccessKey: stringValue(raw.secretAccessKey),
 			sessionToken: stringValue(raw.sessionToken),
-			proxyAccessToken: stringValue(raw.proxyAccessToken),
 			pathStyle: raw.pathStyle === true,
 			transportMode: raw.transportMode === "proxy" ? "proxy" : "direct",
 			buckets: buckets,
@@ -315,11 +310,13 @@
 	}
 
 	function bucketByID(vault, id) {
-		return vault && vault.buckets.find(function (bucket) { return bucket.id === id; }) || null;
+		var buckets = vault && Array.isArray(vault.buckets) ? vault.buckets : [];
+		return buckets.find(function (bucket) { return bucket.id === id; }) || null;
 	}
 
 	function bucketByName(vault, name) {
-		return vault && vault.buckets.find(function (bucket) { return bucket.name === name; }) || null;
+		var buckets = vault && Array.isArray(vault.buckets) ? vault.buckets : [];
+		return buckets.find(function (bucket) { return bucket.name === name; }) || null;
 	}
 
 	function validEndpoint(endpoint) {
@@ -340,7 +337,7 @@
 	}
 
 	function vaultFingerprint(vault) {
-		return [vault.endpoint, vault.region, vault.accessKeyId, vault.secretAccessKey, vault.sessionToken, vault.proxyAccessToken, vault.pathStyle ? "path" : "virtual", vault.transportMode || "direct"].join("\u001f");
+		return [vault.endpoint, vault.region, vault.accessKeyId, vault.secretAccessKey, vault.sessionToken, vault.pathStyle ? "path" : "virtual", vault.transportMode || "direct"].join("\u001f");
 	}
 
 	function collectVaultForm() {
@@ -352,7 +349,6 @@
 			accessKeyId: fields.accessKeyId.value.trim(),
 			secretAccessKey: fields.secretAccessKey.value,
 			sessionToken: fields.sessionToken.value,
-			proxyAccessToken: fields.proxyAccessToken.value,
 			pathStyle: fields.pathStyle.checked,
 			transportMode: Array.prototype.find.call(fields.transportMode, function (input) { return input.checked; }).value
 		};
@@ -376,7 +372,7 @@
 		var original = state.draft || accountByID(state.activeVaultId);
 		if (!original) return false;
 		var current = collectVaultForm();
-		return ["name", "endpoint", "region", "accessKeyId", "secretAccessKey", "sessionToken", "proxyAccessToken", "pathStyle", "transportMode"].some(function (key) {
+		return ["name", "endpoint", "region", "accessKeyId", "secretAccessKey", "sessionToken", "pathStyle", "transportMode"].some(function (key) {
 			return current[key] !== original[key];
 		});
 	}
@@ -393,12 +389,11 @@
 		fields.accessKeyId.value = vault.accessKeyId || "";
 		fields.secretAccessKey.value = vault.secretAccessKey || "";
 		fields.sessionToken.value = vault.sessionToken || "";
-		fields.proxyAccessToken.value = vault.proxyAccessToken || "";
 		elements.knownVaultBucket.value = "";
 		fields.pathStyle.checked = vault.pathStyle === true;
 		elements.advancedSettings.open = Boolean(vault.sessionToken || vault.pathStyle);
 		Array.prototype.forEach.call(fields.transportMode, function (input) { input.checked = input.value === (vault.transportMode || "direct"); });
-		[fields.secretAccessKey, fields.sessionToken, fields.proxyAccessToken].forEach(function (field) {
+		[fields.secretAccessKey, fields.sessionToken].forEach(function (field) {
 			field.type = "password";
 			var button = root.querySelector('[data-reveal="' + field.id + '"]');
 			if (button) {
@@ -429,7 +424,6 @@
 		var vault = accountByID(state.activeVaultId);
 		var bucket = bucketByID(vault, state.activeBucketId);
 		var mode = bucket ? activeTransportMode(vault, bucket.name) : selectedTransportMode();
-		elements.proxyTokenField.hidden = state.view === "vault-form" && mode !== "proxy";
 		elements.modeProxy.disabled = proxyBlocked;
 		elements.openModeProxy.disabled = proxyBlocked;
 		elements.proxyModeMessage.textContent = state.proxyAvailable
@@ -455,10 +449,6 @@
 		var vault = accountByID(state.activeVaultId);
 		var bucket = bucketByID(vault, state.activeBucketId);
 		if (!vault || !bucket) return;
-		if (mode === "proxy" && !vault.proxyAccessToken) {
-			showToast("Edit this profile to add the proxy gate token.", "error");
-			return;
-		}
 		if (bucket.transportMode === mode) return;
 		var previousMode = bucket.transportMode;
 		bucket.transportMode = mode;
@@ -704,11 +694,6 @@
 			showToast("Proxy requests require HTTPS.", "error");
 			return;
 		}
-		if (draft.transportMode === "proxy" && !draft.proxyAccessToken) {
-			elements.vaultFormHint.textContent = "Enter the proxy gate token before testing the authenticated proxy.";
-			showToast("The proxy request path requires its gate token.", "error");
-			return;
-		}
 		var fingerprint = vaultFingerprint(draft);
 		state.testedFingerprint = "";
 		state.testedBuckets = [];
@@ -768,7 +753,6 @@
 			accessKeyId: values.accessKeyId,
 			secretAccessKey: values.secretAccessKey,
 			sessionToken: values.sessionToken,
-			proxyAccessToken: values.proxyAccessToken,
 			pathStyle: values.pathStyle,
 			transportMode: values.transportMode,
 			buckets: existing ? existing.buckets : [],
@@ -1173,7 +1157,7 @@
 	}
 
 	async function proxyStorageResponse(vault, operation, extras, range, signal) {
-		var requestHeaders = { "Content-Type": "application/json", "X-Vault-Access-Token": vault.proxyAccessToken || "" };
+		var requestHeaders = { "Content-Type": "application/json" };
 		var response;
 		try {
 			response = await fetch("/vault/proxy/" + operation, {
@@ -1628,7 +1612,7 @@
 		masterChanged();
 	});
 	elements.vaultForm.addEventListener("input", function (event) {
-		if (event.target === elements.fields.name || event.target === elements.fields.endpoint || event.target === elements.fields.region || event.target === elements.fields.accessKeyId || event.target === elements.fields.secretAccessKey || event.target === elements.fields.sessionToken || event.target === elements.fields.proxyAccessToken || event.target === elements.knownVaultBucket || event.target === elements.fields.pathStyle || Array.prototype.indexOf.call(elements.fields.transportMode, event.target) >= 0) clearConnectionTest();
+		if (event.target === elements.fields.name || event.target === elements.fields.endpoint || event.target === elements.fields.region || event.target === elements.fields.accessKeyId || event.target === elements.fields.secretAccessKey || event.target === elements.fields.sessionToken || event.target === elements.knownVaultBucket || event.target === elements.fields.pathStyle || Array.prototype.indexOf.call(elements.fields.transportMode, event.target) >= 0) clearConnectionTest();
 	});
 	elements.fileList.addEventListener("click", function (event) {
 		var button = event.target.closest("[data-kind]");

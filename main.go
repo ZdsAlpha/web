@@ -52,7 +52,6 @@ func main() {
 		B2KeyID:        os.Getenv("B2_APPLICATION_KEY_ID"),
 		B2Application:  os.Getenv("B2_APPLICATION_KEY"),
 		B2Bucket:       os.Getenv("B2_BUCKET"),
-		AccessToken:    os.Getenv("VAULT_ACCESS_TOKEN"),
 		AuthorizeURL:   os.Getenv("B2_AUTHORIZE_URL"),
 		S3ProxyEnabled: os.Getenv("VAULT_S3_PROXY_ENABLED") == "1",
 	})

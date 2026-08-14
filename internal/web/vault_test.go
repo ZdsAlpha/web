@@ -119,8 +119,6 @@ func TestVaultProxyRejectsInvalidKeysBeforeStorageAccess(t *testing.T) {
 }
 
 func TestS3ProxyListsBucketsWithoutPersistingCredentials(t *testing.T) {
-	const accessToken = "proxy-access-token"
-
 	var got *http.Request
 	transport := roundTripFunc(func(r *http.Request) (*http.Response, error) {
 		got = r.Clone(r.Context())
@@ -128,13 +126,11 @@ func TestS3ProxyListsBucketsWithoutPersistingCredentials(t *testing.T) {
 	})
 	proxy := NewVaultProxy(VaultConfig{
 		S3ProxyEnabled: true,
-		AccessToken:    accessToken,
 		HTTPClient:     &http.Client{Transport: transport},
 	})
 
 	body := `{"endpoint":"https://s3.example.test","region":"us-east-1","accessKeyId":"AKIA_TEST","secretAccessKey":"secret-value","query":[["list-type","2"]]}`
 	req := httptest.NewRequest(http.MethodPost, "/vault/proxy/list-buckets", strings.NewReader(body))
-	req.Header.Set("X-Vault-Access-Token", accessToken)
 	rec := httptest.NewRecorder()
 	proxy.ServeHTTP(rec, req)
 
@@ -156,8 +152,6 @@ func TestS3ProxyListsBucketsWithoutPersistingCredentials(t *testing.T) {
 }
 
 func TestS3ProxyForwardsEncryptedObjectRangeAndEnvelope(t *testing.T) {
-	const accessToken = "proxy-access-token"
-
 	var got *http.Request
 	transport := roundTripFunc(func(r *http.Request) (*http.Response, error) {
 		got = r.Clone(r.Context())
@@ -172,13 +166,11 @@ func TestS3ProxyForwardsEncryptedObjectRangeAndEnvelope(t *testing.T) {
 	})
 	proxy := NewVaultProxy(VaultConfig{
 		S3ProxyEnabled: true,
-		AccessToken:    accessToken,
 		HTTPClient:     &http.Client{Transport: transport},
 	})
 
 	body := `{"endpoint":"https://s3.example.test/root","region":"us-east-1","accessKeyId":"AKIA_TEST","secretAccessKey":"secret-value","pathStyle":true,"bucket":"archive","key":"abc_DEF-/zyx","range":"bytes=2-5"}`
 	req := httptest.NewRequest(http.MethodPost, "/vault/proxy/object", strings.NewReader(body))
-	req.Header.Set("X-Vault-Access-Token", accessToken)
 	rec := httptest.NewRecorder()
 	proxy.ServeHTTP(rec, req)
 
@@ -202,11 +194,10 @@ func TestS3ProxyForwardsEncryptedObjectRangeAndEnvelope(t *testing.T) {
 	}
 }
 
-func TestS3ProxyRequiresAccessTokenAndHTTPS(t *testing.T) {
+func TestS3ProxyRejectsInsecureEndpoint(t *testing.T) {
 	var calls int
 	proxy := NewVaultProxy(VaultConfig{
 		S3ProxyEnabled: true,
-		AccessToken:    "proxy-access-token",
 		HTTPClient: &http.Client{Transport: roundTripFunc(func(r *http.Request) (*http.Response, error) {
 			calls++
 			return response(http.StatusOK, nil, "unexpected"), nil
@@ -214,15 +205,8 @@ func TestS3ProxyRequiresAccessTokenAndHTTPS(t *testing.T) {
 	})
 
 	body := `{"endpoint":"https://s3.example.test","region":"us-east-1","accessKeyId":"AKIA_TEST","secretAccessKey":"secret-value"}`
-	missingToken := httptest.NewRecorder()
-	proxy.ServeHTTP(missingToken, httptest.NewRequest(http.MethodPost, "/vault/proxy/list-buckets", strings.NewReader(body)))
-	if missingToken.Code != http.StatusNotFound {
-		t.Fatalf("missing proxy token status = %d; want %d", missingToken.Code, http.StatusNotFound)
-	}
-
 	httpEndpoint := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "/vault/proxy/list-buckets", strings.NewReader(strings.Replace(body, "https://", "http://", 1)))
-	req.Header.Set("X-Vault-Access-Token", "proxy-access-token")
 	proxy.ServeHTTP(httpEndpoint, req)
 	if httpEndpoint.Code != http.StatusBadRequest || !strings.Contains(httpEndpoint.Body.String(), "must use https") {
 		t.Fatalf("http endpoint response = %d %q; want HTTPS validation failure", httpEndpoint.Code, httpEndpoint.Body.String())
@@ -243,12 +227,12 @@ func TestS3ProxyIsDisabledByDefault(t *testing.T) {
 	}
 }
 
-func TestS3ProxyRequiresConfiguredAccessToken(t *testing.T) {
+func TestS3ProxyEnabledWithoutAccessToken(t *testing.T) {
 	proxy := NewVaultProxy(VaultConfig{S3ProxyEnabled: true})
 	rec := httptest.NewRecorder()
 	proxy.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/vault/proxy/status", nil))
-	if rec.Code != http.StatusNotFound {
-		t.Fatalf("proxy without configured access token status = %d; want %d", rec.Code, http.StatusNotFound)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("proxy status = %d; want %d", rec.Code, http.StatusOK)
 	}
 }
 

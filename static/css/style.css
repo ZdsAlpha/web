@@ -642,8 +642,6 @@ a:hover { text-decoration: underline; }
 .transport-option strong { font-size: 0.84rem; }
 .transport-option small { font-size: 0.74rem; }
 #proxy-mode-message { display: block; margin-top: var(--space-3); }
-#proxy-token-field { margin-top: var(--space-4); }
-
 .account-form select,
 .account-form textarea,
 .bucket-form input:not([type="file"]),

@@ -102,14 +102,9 @@ templ Vault() {
 							<fieldset class="transport-options">
 								<legend>Default request path</legend>
 								<label class="transport-option"><input id="vault-mode-direct" name="transportMode" type="radio" value="direct" checked/> <span><strong>Direct S3</strong><small>Browser → S3 endpoint. Requires CORS for this origin.</small></span></label>
-								<label class="transport-option"><input id="vault-mode-proxy" name="transportMode" type="radio" value="proxy"/> <span><strong>Authenticated proxy</strong><small>Browser → this service → S3. For endpoints without CORS; request credentials are not retained server-side.</small></span></label>
+								<label class="transport-option"><input id="vault-mode-proxy" name="transportMode" type="radio" value="proxy"/> <span><strong>Server proxy</strong><small>Browser → this service → S3. For endpoints without CORS; request credentials are not retained server-side.</small></span></label>
 								<small id="proxy-mode-message">Proxy availability is checked when this page opens.</small>
 							</fieldset>
-							<label id="proxy-token-field">
-								<span>Proxy gate token <em>proxy mode only</em></span>
-								<span class="secret-input"><input id="vault-proxy-token" name="proxyAccessToken" type="password" spellcheck="false" autocomplete="off"/><button class="reveal-button" type="button" data-reveal="vault-proxy-token" aria-label="Show server proxy access token">Show</button></span>
-								<small>Must match <code>VAULT_ACCESS_TOKEN</code> on this deployment. It is sent only to this site.</small>
-							</label>
 						</fieldset>
 						<section class="verification-card" aria-live="polite">
 							<div class="verification-heading">
