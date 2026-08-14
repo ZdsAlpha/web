@@ -261,8 +261,19 @@ a:hover { text-decoration: underline; }
 	text-transform: uppercase;
 }
 
-.vault-hero h1 { margin-bottom: var(--space-2); }
-.vault-lede { max-width: 650px; margin: 0; color: var(--muted); }
+.vault-hero h1 {
+	margin-bottom: var(--space-2);
+	font-size: clamp(2.45rem, 5vw, 3.5rem);
+	line-height: 0.98;
+}
+
+.vault-lede {
+	max-width: 690px;
+	margin: 0;
+	color: var(--muted);
+	font-size: 1rem;
+	line-height: 1.62;
+}
 
 .local-badge {
 	display: inline-flex;
@@ -272,10 +283,12 @@ a:hover { text-decoration: underline; }
 	padding: 8px 12px;
 	border: 1px solid color-mix(in srgb, var(--accent-2) 38%, var(--border));
 	border-radius: 999px;
+	background: color-mix(in srgb, var(--accent-2) 8%, var(--surface));
 	color: var(--accent-2);
-	font-family: var(--font-sans);
+	font-family: var(--font-mono);
 	font-size: 0.78rem;
 	font-weight: 700;
+	letter-spacing: 0.015em;
 }
 
 .status-dot {
@@ -287,21 +300,22 @@ a:hover { text-decoration: underline; }
 }
 
 .vault-notice {
-	display: flex;
-	gap: var(--space-3);
-	align-items: baseline;
+	display: grid;
+	grid-template-columns: minmax(180px, 0.42fr) minmax(0, 1fr);
+	gap: var(--space-4);
+	align-items: start;
 	margin-bottom: var(--space-6);
 	padding: var(--space-4) var(--space-5);
-	border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--border));
+	border: 1px solid color-mix(in srgb, var(--accent) 38%, var(--border));
 	border-radius: var(--vault-radius);
-	background: var(--accent-soft);
+	background: linear-gradient(115deg, var(--accent-soft), color-mix(in srgb, var(--accent-2) 8%, var(--surface-soft)));
 	color: var(--muted);
 	font-family: var(--font-sans);
 	font-size: 0.88rem;
 	line-height: 1.5;
 }
 
-.vault-notice strong { color: var(--text); white-space: nowrap; }
+.vault-notice strong { color: var(--text); font-weight: 700; }
 
 .vault-layout {
 	display: grid;
@@ -319,7 +333,7 @@ a:hover { text-decoration: underline; }
 	box-shadow: var(--shadow);
 }
 
-.vault-sidebar { padding: var(--space-4); }
+.vault-sidebar { position: sticky; top: var(--space-4); padding: var(--space-4); }
 .vault-workspace { padding: var(--space-6); }
 
 .panel-heading,
@@ -554,7 +568,7 @@ a:hover { text-decoration: underline; }
 
 .account-form label > span:first-child b { color: var(--accent-3); }
 .account-form label em { color: var(--muted); font-size: 0.75rem; font-style: normal; font-weight: 400; }
-.account-form input:not([type="checkbox"]) {
+.account-form input:not([type="checkbox"]):not([type="radio"]) {
 	box-sizing: border-box;
 	width: 100%;
 	min-height: var(--vault-control-height);
@@ -568,9 +582,35 @@ a:hover { text-decoration: underline; }
 	font-size: 0.9rem;
 }
 
-.account-form input:not([type="checkbox"]):focus { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent); outline: 0; }
+.account-form input:not([type="checkbox"]):not([type="radio"]):focus { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent); outline: 0; }
 .account-form small { color: var(--muted); font-size: 0.74rem; font-weight: 400; line-height: 1.45; }
 .account-form small code { font-size: 0.9em; }
+
+.advanced-settings {
+	margin: var(--space-4) 0 0;
+	padding: 0 var(--space-4);
+	border: 1px solid var(--border);
+	border-radius: 10px;
+	background: color-mix(in srgb, var(--surface-soft) 74%, transparent);
+}
+
+.advanced-settings summary {
+	padding: var(--space-3) 0;
+	color: var(--text);
+	font-family: var(--font-sans);
+	font-size: 0.82rem;
+	font-weight: 700;
+}
+
+.advanced-settings > p {
+	margin: 0 0 var(--space-4);
+	color: var(--muted);
+	font-family: var(--font-sans);
+	font-size: 0.78rem;
+	line-height: 1.5;
+}
+
+.advanced-settings label:last-child { margin-bottom: var(--space-4); }
 
 .transport-options {
 	margin-top: var(--space-5) !important;
@@ -581,13 +621,28 @@ a:hover { text-decoration: underline; }
 }
 
 .transport-options legend { margin-bottom: var(--space-3); padding: 0; border: 0; font-size: 0.86rem; }
-.transport-option { display: flex !important; grid-template-columns: auto 1fr; align-items: flex-start; gap: var(--space-3) !important; margin: 0 0 var(--space-3) !important; font-weight: 400 !important; }
+.transport-option {
+	display: flex !important;
+	grid-template-columns: auto 1fr;
+	align-items: flex-start;
+	gap: var(--space-3) !important;
+	margin: 0 0 var(--space-2) !important;
+	padding: var(--space-3);
+	border: 1px solid transparent;
+	border-radius: 8px;
+	font-weight: 400 !important;
+	transition: border-color 160ms ease, background-color 160ms ease;
+}
+
+.transport-option:hover { background: color-mix(in srgb, var(--accent-soft) 58%, transparent); }
+.transport-option:has(input:checked) { border-color: color-mix(in srgb, var(--accent) 52%, var(--border)); background: var(--accent-soft); }
 .transport-option:last-of-type { margin-bottom: var(--space-2) !important; }
-.transport-option input { flex: 0 0 auto; margin-top: 3px; accent-color: var(--accent); }
+.transport-option input { flex: 0 0 auto; width: 18px; height: 18px; margin-top: 3px; accent-color: var(--accent); }
 .transport-option span { display: grid; gap: 2px; }
-.transport-option strong { font-size: 0.82rem; }
+.transport-option strong { font-size: 0.84rem; }
 .transport-option small { font-size: 0.74rem; }
-#proxy-mode-message { display: block; }
+#proxy-mode-message { display: block; margin-top: var(--space-3); }
+#proxy-token-field { margin-top: var(--space-4); }
 
 .account-form select,
 .account-form textarea,
@@ -904,10 +959,10 @@ article.post > footer.post-footer {
 	.content { padding: var(--space-6) var(--space-4); }
 	.vault-shell .vault-hero { display: block; }
 	.vault-shell .local-badge { margin-top: var(--space-4); }
-	.vault-shell .vault-notice { display: grid; gap: var(--space-2); padding: var(--space-4); }
+	.vault-shell .vault-notice { display: grid; grid-template-columns: 1fr; gap: var(--space-2); padding: var(--space-4); }
 	.vault-shell .vault-notice strong { white-space: normal; }
 	.vault-shell .vault-layout { grid-template-columns: 1fr; }
-	.vault-shell .vault-sidebar, .vault-shell .vault-workspace { padding: var(--space-4); }
+	.vault-shell .vault-sidebar, .vault-shell .vault-workspace { position: static; padding: var(--space-4); }
 	.vault-shell .form-grid { grid-template-columns: 1fr; gap: 0; }
 	.vault-shell .master-source-grid { grid-template-columns: 1fr; }
 	.vault-shell .verification-heading, .vault-shell .file-manager-heading { display: grid; align-items: start; }

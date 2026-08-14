@@ -40,6 +40,8 @@
 		modeDirect: document.getElementById("vault-mode-direct"),
 		modeProxy: document.getElementById("vault-mode-proxy"),
 		proxyModeMessage: document.getElementById("proxy-mode-message"),
+		proxyTokenField: document.getElementById("proxy-token-field"),
+		advancedSettings: document.getElementById("advanced-s3-settings"),
 		connectionState: document.getElementById("connection-state"),
 		connectionMessage: document.getElementById("connection-message"),
 		knownVaultBucket: document.getElementById("known-vault-bucket"),
@@ -358,8 +360,8 @@
 
 	function requiredVaultFields(vault) {
 		var labels = {
-			name: "vault name",
-			endpoint: "S3 endpoint",
+			name: "profile name",
+			endpoint: "S3-compatible endpoint",
 			region: "region",
 			accessKeyId: "access key ID",
 			secretAccessKey: "secret access key"
@@ -380,7 +382,7 @@
 	}
 
 	function confirmEditorExit() {
-		return !editorChanged() || window.confirm("Discard unsaved vault changes?");
+		return !editorChanged() || window.confirm("Discard unsaved profile changes?");
 	}
 
 	function fillVaultForm(vault) {
@@ -394,6 +396,7 @@
 		fields.proxyAccessToken.value = vault.proxyAccessToken || "";
 		elements.knownVaultBucket.value = "";
 		fields.pathStyle.checked = vault.pathStyle === true;
+		elements.advancedSettings.open = Boolean(vault.sessionToken || vault.pathStyle);
 		Array.prototype.forEach.call(fields.transportMode, function (input) { input.checked = input.value === (vault.transportMode || "direct"); });
 		[fields.secretAccessKey, fields.sessionToken, fields.proxyAccessToken].forEach(function (field) {
 			field.type = "password";
@@ -413,7 +416,7 @@
 		elements.availableBucketsLabel.textContent = "Discovered buckets";
 		elements.connectionState.textContent = "Not tested";
 		elements.connectionState.dataset.state = "idle";
-		elements.connectionMessage.textContent = "Test a known bucket, or leave it blank to list the buckets visible to these credentials. A successful test unlocks saving this vault.";
+		elements.connectionMessage.textContent = "Test a known bucket, or leave it empty to list the buckets visible to these credentials. A successful request unlocks this profile.";
 	}
 
 	function selectedTransportMode() {
@@ -426,11 +429,12 @@
 		var vault = accountByID(state.activeVaultId);
 		var bucket = bucketByID(vault, state.activeBucketId);
 		var mode = bucket ? activeTransportMode(vault, bucket.name) : selectedTransportMode();
+		elements.proxyTokenField.hidden = state.view === "vault-form" && mode !== "proxy";
 		elements.modeProxy.disabled = proxyBlocked;
 		elements.openModeProxy.disabled = proxyBlocked;
 		elements.proxyModeMessage.textContent = state.proxyAvailable
-			? "Choose a default for verification and new buckets. Each registered bucket can switch independently."
-			: "Server proxy is not enabled on this deployment. Direct mode requires provider CORS.";
+			? "Direct requests go browser-to-S3. Proxy requests return encrypted bytes only; each registered bucket can choose independently."
+			: "Proxy is disabled on this deployment. Direct S3 requests require provider CORS.";
 		elements.openModeDirect.classList.toggle("is-active", mode === "direct");
 		elements.openModeProxy.classList.toggle("is-active", mode === "proxy");
 		elements.openModeDirect.setAttribute("aria-pressed", String(mode === "direct"));
@@ -452,7 +456,7 @@
 		var bucket = bucketByID(vault, state.activeBucketId);
 		if (!vault || !bucket) return;
 		if (mode === "proxy" && !vault.proxyAccessToken) {
-			showToast("Edit this vault to add the server proxy access token.", "error");
+			showToast("Edit this profile to add the proxy gate token.", "error");
 			return;
 		}
 		if (bucket.transportMode === mode) return;
@@ -470,7 +474,7 @@
 			updateTransportModeUI();
 			renderBucketList();
 			loadFileList();
-			showToast("Could not save this bucket's connection mode.", "error");
+			showToast("Could not save this bucket's request path.", "error");
 		});
 	}
 
@@ -517,7 +521,7 @@
 			var copy = document.createElement("span");
 			copy.className = "account-row-copy";
 			var name = document.createElement("strong");
-			name.textContent = vault.name || "Unnamed vault";
+			name.textContent = vault.name || "Unnamed profile";
 			var detail = document.createElement("small");
 			detail.textContent = vault.buckets.length + " bucket" + (vault.buckets.length === 1 ? "" : "s");
 			copy.appendChild(name);
@@ -561,7 +565,7 @@
 
 	function render() {
 		var hasVaults = state.vaults.length > 0;
-		elements.vaultCount.textContent = state.vaults.length + " saved";
+		elements.vaultCount.textContent = state.vaults.length + " profile" + (state.vaults.length === 1 ? "" : "s");
 		elements.welcome.hidden = state.view !== "welcome";
 		elements.vaultForm.hidden = state.view !== "vault-form";
 		elements.bucketForm.hidden = state.view !== "bucket-form";
@@ -582,8 +586,8 @@
 		state.view = "vault-form";
 		fillVaultForm(state.draft);
 		clearConnectionTest();
-		elements.vaultFormTitle.textContent = "New vault";
-		elements.vaultFormHint.textContent = "Required fields are marked with an asterisk.";
+		elements.vaultFormTitle.textContent = "New S3 profile";
+		elements.vaultFormHint.textContent = "Required fields are marked with an asterisk. Test the profile before saving it locally.";
 		render();
 		elements.fields.name.focus();
 	}
@@ -595,8 +599,8 @@
 		state.view = "vault-form";
 		fillVaultForm(vault);
 		clearConnectionTest();
-		elements.vaultFormTitle.textContent = vault.name || "Edit vault";
-		elements.vaultFormHint.textContent = "Test the updated credentials before saving changes.";
+		elements.vaultFormTitle.textContent = vault.name || "Edit S3 profile";
+		elements.vaultFormHint.textContent = "Test the updated signing credentials before saving changes.";
 		render();
 	}
 
@@ -633,7 +637,7 @@
 
 	function deleteActiveVault() {
 		var vault = accountByID(state.activeVaultId);
-		if (!vault || !window.confirm("Delete “" + (vault.name || "this vault") + "” and its local bucket registrations?")) return;
+		if (!vault || !window.confirm("Remove “" + (vault.name || "this profile") + "” and its local bucket registrations?")) return;
 		removeVault(vault.id).then(function () {
 			state.vaults = state.vaults.filter(function (item) { return item.id !== vault.id; });
 			state.activeVaultId = state.vaults.length ? state.vaults[0].id : null;
@@ -641,8 +645,8 @@
 			state.view = state.activeVaultId ? "files" : "welcome";
 			render();
 			if (state.activeVaultId) loadFileList();
-			showToast("Vault removed from this browser.", "success");
-		}).catch(function () { showToast("Could not remove this vault.", "error"); });
+			showToast("Profile removed from this browser.", "success");
+		}).catch(function () { showToast("Could not remove this profile.", "error"); });
 	}
 
 	function setConnectionState(stateName, message) {
@@ -686,8 +690,8 @@
 			return;
 		}
 		if (!validEndpoint(draft.endpoint)) {
-			elements.vaultFormHint.textContent = "The endpoint must be a valid http:// or https:// URL.";
-			showToast("Check the S3 endpoint URL.", "error");
+			elements.vaultFormHint.textContent = "The S3-compatible endpoint must be a valid http:// or https:// URL.";
+			showToast("Check the S3-compatible endpoint URL.", "error");
 			return;
 		}
 		if (knownBucket && !validBucketName(knownBucket)) {
@@ -696,13 +700,13 @@
 			return;
 		}
 		if (draft.transportMode === "proxy" && new URL(draft.endpoint).protocol !== "https:") {
-			elements.vaultFormHint.textContent = "Server proxy mode requires an HTTPS S3 endpoint.";
-			showToast("Proxy mode requires HTTPS.", "error");
+			elements.vaultFormHint.textContent = "The authenticated proxy requires an HTTPS S3 endpoint.";
+			showToast("Proxy requests require HTTPS.", "error");
 			return;
 		}
 		if (draft.transportMode === "proxy" && !draft.proxyAccessToken) {
-			elements.vaultFormHint.textContent = "Enter the server proxy access token before testing proxy mode.";
-			showToast("Proxy mode requires the server access token.", "error");
+			elements.vaultFormHint.textContent = "Enter the proxy gate token before testing the authenticated proxy.";
+			showToast("The proxy request path requires its gate token.", "error");
 			return;
 		}
 		var fingerprint = vaultFingerprint(draft);
@@ -713,15 +717,15 @@
 		elements.availableBucketsField.hidden = true;
 		if (draft.transportMode === "proxy" && !state.proxyAvailable) {
 			elements.testConnection.disabled = false;
-			setConnectionState("Unavailable", "Server proxy mode is not enabled on this deployment.");
+			setConnectionState("Unavailable", "The authenticated proxy is not enabled on this deployment.");
 			return;
 		}
 		var verification = knownBucket
 			? listBucket(draft, knownBucket, "", 1, false).then(function () { return [{ name: knownBucket }]; })
 			: listBuckets(draft);
 		setConnectionState("Testing…", knownBucket
-			? (draft.transportMode === "proxy" ? "Verifying the known bucket through the isolated server proxy." : "Verifying the known bucket directly from this browser.")
-			: (draft.transportMode === "proxy" ? "Sending credentials to the isolated server proxy for a bucket-list request." : "Contacting the S3 endpoint directly from this browser and requesting its bucket list."));
+			? (draft.transportMode === "proxy" ? "Verifying the known bucket through the authenticated proxy." : "Verifying the known bucket directly against the S3 endpoint.")
+			: (draft.transportMode === "proxy" ? "Signing a bucket-list request through the authenticated proxy." : "Requesting the visible bucket list directly from the S3 endpoint."));
 		verification.then(function (buckets) {
 			state.testedFingerprint = fingerprint;
 			state.testedBuckets = buckets;
@@ -730,8 +734,8 @@
 			elements.availableBucketsField.hidden = false;
 			elements.saveVault.hidden = false;
 			setConnectionState("Verified", knownBucket
-				? "Known bucket verified. You can now save this vault without a master file."
-				: buckets.length + " bucket" + (buckets.length === 1 ? "" : "s") + " listed successfully. You can now save this vault without a master file.");
+				? "Known bucket verified. You can now save this connection profile without a master file."
+				: buckets.length + " bucket" + (buckets.length === 1 ? "" : "s") + " listed successfully. You can now save this connection profile without a master file.");
 		}).catch(function (error) {
 			var message = error.message;
 			if (!knownBucket && draft.transportMode === "direct") message += " If your provider uses bucket-scoped CORS, enter a known bucket above and test it directly.";
@@ -751,8 +755,8 @@
 			return;
 		}
 		if (vaultFingerprint(values) !== state.testedFingerprint) {
-			elements.vaultFormHint.textContent = "Test the current credentials before saving this vault.";
-			showToast("The vault needs a successful connection test.", "error");
+			elements.vaultFormHint.textContent = "Test the current credentials before saving this profile.";
+			showToast("The profile needs a successful connection test.", "error");
 			return;
 		}
 		var existing = state.activeVaultId ? accountByID(state.activeVaultId) : null;
@@ -781,8 +785,8 @@
 			state.view = "files";
 			render();
 			loadFileList();
-			showToast(existing ? "Vault updated locally." : "Vault saved locally.", "success");
-		}).catch(function () { showToast("Could not save this vault in the browser.", "error"); });
+			showToast(existing ? "Profile updated locally." : "Profile saved locally.", "success");
+		}).catch(function () { showToast("Could not save this profile in the browser.", "error"); });
 	}
 
 	function startBucketSetup() {
