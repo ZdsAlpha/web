@@ -1,6 +1,6 @@
 module github.com/ZdsAlpha/web
 
-go 1.26
+go 1.26.0
 
 toolchain go1.26.5
 
@@ -11,7 +11,7 @@ require (
 	github.com/yuin/goldmark v1.8.2
 	github.com/yuin/goldmark-highlighting/v2 v2.0.0-20230729083705-37449abec8cc
 	go.abhg.dev/goldmark/anchor v0.2.0
-	golang.org/x/image v0.44.0
+	golang.org/x/image v0.46.0
 )
 
 require (
@@ -26,12 +26,12 @@ require (
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/natefinch/atomic v1.0.1 // indirect
-	golang.org/x/mod v0.38.0 // indirect
-	golang.org/x/net v0.57.0 // indirect
-	golang.org/x/sync v0.22.0 // indirect
-	golang.org/x/sys v0.47.0 // indirect
-	golang.org/x/text v0.40.0 // indirect
-	golang.org/x/tools v0.48.0 // indirect
+	golang.org/x/mod v0.41.0 // indirect
+	golang.org/x/net v0.58.0 // indirect
+	golang.org/x/sync v0.23.0 // indirect
+	golang.org/x/sys v0.48.0 // indirect
+	golang.org/x/text v0.42.0 // indirect
+	golang.org/x/tools v0.49.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
 
