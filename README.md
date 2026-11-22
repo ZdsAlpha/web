@@ -49,6 +49,9 @@ The first run on a fresh machine may download declared Go modules. Subsequent
 runs use Go's module and build caches. Project commands never use `@latest` or
 install an unversioned executable.
 
+The browser tests require Node.js 20 or newer. Run `npm ci`,
+`npx playwright install chromium`, and `npm run test:e2e`.
+
 `DEV=1` reads `content/` and `static/` from disk and includes drafts. Without
 it, both are served from the embedded copies and drafts are hidden.
 

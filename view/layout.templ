@@ -39,15 +39,12 @@ templ Layout(h Head) {
 				<meta property="og:image:alt" content="arehman.dev — Notes on software, systems, and building things."/>
 			}
 			<meta name="twitter:card" content="summary_large_image"/>
-			if h.NoIndex {
-				<meta name="robots" content="noindex, nofollow, noarchive"/>
-			}
 			for _, block := range h.JSONLD {
 				@templ.Raw(string(block))
 			}
 			<link rel="icon" href="/static/favicon.svg" type="image/svg+xml"/>
 			<link rel="stylesheet" href="/static/css/vendor/pico.classless.min.css"/>
-			<link rel="stylesheet" href="/static/css/style.css?v=2"/>
+			<link rel="stylesheet" href="/static/css/style.css"/>
 			<link rel="stylesheet" href="/static/css/chroma.css"/>
 			// Set theme before paint to avoid a flash of the wrong color scheme.
 			<script src="/static/js/theme-init.js"></script>

@@ -1,6 +1,6 @@
 # ---- Build stage ----
 # Pinned to a patched Go release; bump as new patches ship.
-FROM golang:1.26.5 AS build
+FROM golang:1.27.4-trixie AS build
 WORKDIR /src
 
 # Cache dependencies first.
@@ -16,7 +16,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /out/web .
 
 # ---- Runtime stage ----
 # distroless static: ships CA certs + tzdata, runs as nonroot.
-FROM gcr.io/distroless/static-debian12:nonroot
+FROM gcr.io/distroless/static-debian13:nonroot
 WORKDIR /
 COPY --from=build /out/web /web
 

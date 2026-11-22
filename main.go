@@ -48,18 +48,11 @@ func main() {
 	// Absolute origin for canonical URLs and the sitemap. Override per-env.
 	baseURL := strings.TrimRight(cmp.Or(os.Getenv("BASE_URL"), "https://arehman.dev"), "/")
 	view.SetBaseURL(baseURL)
-	vault := web.NewVaultProxy(web.VaultConfig{
-		B2KeyID:        os.Getenv("B2_APPLICATION_KEY_ID"),
-		B2Application:  os.Getenv("B2_APPLICATION_KEY"),
-		B2Bucket:       os.Getenv("B2_BUCKET"),
-		AuthorizeURL:   os.Getenv("B2_AUTHORIZE_URL"),
-		S3ProxyEnabled: os.Getenv("VAULT_S3_PROXY_ENABLED") == "1",
-	})
 
 	addr := ":" + cmp.Or(os.Getenv("PORT"), "8080")
 	srv := &http.Server{
 		Addr:              addr,
-		Handler:           web.HandlerWithVault(store, staticRoot, baseURL, vault),
+		Handler:           web.Handler(store, staticRoot, baseURL),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       10 * time.Second,
 		WriteTimeout:      15 * time.Second,

@@ -96,7 +96,10 @@ test('article figures are visible and fit the viewport', async ({ page }) => {
 
   const viewportWidth = page.viewportSize()?.width ?? 0;
   for (let i = 0; i < await figures.count(); i++) {
-    const box = await figures.nth(i).boundingBox();
+    const figure = figures.nth(i);
+    await figure.scrollIntoViewIfNeeded();
+    await expect(figure).not.toHaveJSProperty('naturalWidth', 0);
+    const box = await figure.boundingBox();
     expect(box, `figure ${i + 1} should render`).not.toBeNull();
     expect(box!.width).toBeGreaterThan(250);
     expect(box!.width).toBeLessThanOrEqual(viewportWidth);

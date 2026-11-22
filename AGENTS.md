@@ -68,8 +68,8 @@ flyctl deploy --remote-only --yes   # build + deploy via Fly remote builder
   emits it via `@templ.Raw`. Never interpolate JSON-LD through `{ … }` — templ entity-escapes it
   and breaks the JSON. The `<script type="application/ld+json">` block is inert data, so the
   strict `script-src 'self'` CSP does not block it (no nonce/hash needed).
-- Keep the Docker `golang:1.26.x` builder pinned to a **patched** Go release; bump it when
-  `govulncheck` flags stdlib advisories.
+- Keep the Docker Go builder pinned to the same **patched** release as the `toolchain`
+  directive in `go.mod`. Bump both when `govulncheck` flags stdlib advisories.
 
 ## Adding a post
 
