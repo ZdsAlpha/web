@@ -230,6 +230,156 @@ a:hover { text-decoration: underline; }
 	border-radius: 999px;
 }
 
+/* ---- Image generator ---------------------------------------------------- */
+.demo-list > li { list-style: none; }
+.demo-entry {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) clamp(68px, 20vw, 108px);
+	align-items: center;
+	gap: var(--space-4);
+	padding-bottom: var(--space-5);
+	border-bottom: 1px solid var(--border);
+}
+.demo-entry:hover { text-decoration: none; }
+.demo-entry .post-title { margin-top: 0; }
+.demo-entry img { width: 100%; height: auto; border-radius: 8px; }
+.demo-entry-meta {
+	margin: var(--space-2) 0 0;
+	color: var(--muted);
+	font: 0.8rem/1.5 var(--font-sans);
+}
+
+article.generator {
+	min-width: 0;
+	margin: 0;
+	padding: 0;
+	background: none;
+	box-shadow: none;
+}
+.generator > .generator-header {
+	margin: 0 0 var(--space-6);
+	padding: 0;
+	border: 0;
+	background: none;
+}
+.generator-header p { margin: 0; }
+.generator-back {
+	display: inline-block;
+	margin-bottom: var(--space-4);
+	font-family: var(--font-sans);
+	font-size: 0.875rem;
+}
+
+.generator-panel {
+	padding: var(--space-5);
+	border: 1px solid var(--border);
+	border-radius: 12px;
+	background: var(--surface);
+}
+.generator-controls {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--space-2) var(--space-4);
+	margin-bottom: var(--space-4);
+}
+.generator-controls h2 { margin: 0; font-size: 1.14rem; }
+.generator-controls label {
+	display: flex;
+	align-items: center;
+	gap: var(--space-2);
+	margin: 0;
+	color: var(--muted);
+	font-family: var(--font-sans);
+	font-size: 0.875rem;
+}
+.generator-controls select {
+	width: auto;
+	min-width: 7.75rem;
+	margin: 0;
+	padding: var(--space-2) 2rem var(--space-2) var(--space-3);
+	border-color: var(--border);
+	background-color: var(--surface-soft);
+	color: var(--text);
+	font-size: inherit;
+}
+.generator-grid {
+	display: grid;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	gap: var(--space-3);
+}
+.generator-grid figure { margin: 0; }
+.generator-grid img,
+.generator-grid canvas {
+	display: block;
+	width: 100%;
+	height: auto;
+	aspect-ratio: 1;
+	border-radius: 6px;
+	background: var(--surface-soft);
+}
+.generator-grid figcaption {
+	margin-top: var(--space-1);
+	color: var(--muted);
+	font: 0.8rem var(--font-sans);
+}
+.generator-action {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--space-2) var(--space-4);
+	margin-bottom: var(--space-4);
+	padding-bottom: var(--space-4);
+	border-bottom: 1px solid var(--border);
+}
+.generator-action button {
+	width: auto;
+	margin: 0;
+	padding: var(--space-2) var(--space-4);
+	border: 1px solid var(--accent);
+	border-radius: 6px;
+	background: var(--accent);
+	color: var(--bg);
+	font: 600 0.9rem/1.6 var(--font-sans);
+}
+.generator-action button:disabled { opacity: 0.65; }
+.generator-action p {
+	flex: 1 1 13rem;
+	margin: 0;
+	color: var(--muted);
+	font: 0.85rem/1.5 var(--font-sans);
+}
+.generator-action progress { flex-basis: 100%; margin: 0; }
+.generator [hidden] { display: none; }
+
+.generator-flow {
+	display: grid;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	gap: 1px;
+	overflow: hidden;
+	margin: 0 0 var(--space-5);
+	padding: 0;
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	background: var(--border);
+	font-family: var(--font-sans);
+}
+.generator-flow li {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-1);
+	margin: 0;
+	padding: var(--space-3);
+	background: var(--surface-soft);
+}
+.generator-flow strong { font-size: 0.95rem; }
+.generator-flow span { color: var(--muted); font-size: 0.8rem; line-height: 1.4; }
+.generator-inspect details { margin-top: var(--space-5); }
+.generator-inspect dt { font-weight: 600; }
+.generator-inspect dd { margin: 0; color: var(--muted); }
+.generator-inspect dl > div { margin: var(--space-2) 0; }
+
 /* ---- Post / page -------------------------------------------------------- */
 article.post {
 	min-width: 0;
@@ -376,6 +526,9 @@ article.post > footer.post-footer {
 	.nav-links { gap: var(--space-4); }
 	.theme-toggle { display: none; }
 	.content { padding: var(--space-6) var(--space-4); }
+	.generator-panel { padding: var(--space-3); }
+	.generator-grid,
+	.generator-flow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 	h1, h2, h3, h4, p { text-wrap: wrap; }
 	h1, .post-header h1 {
 		font-size: 1.62rem;

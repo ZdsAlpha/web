@@ -13,6 +13,7 @@ test-results/
 playwright-report/
 *.exe
 *.log
+/static/models/imgen40/generator_fp16.onnx
 
 # Fly
 .fly/

@@ -1,6 +1,8 @@
 package web
 
 import (
+	"crypto/sha256"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -8,6 +10,7 @@ import (
 	"testing/fstest"
 
 	"github.com/ZdsAlpha/web/internal/content"
+	"github.com/ZdsAlpha/web/view"
 )
 
 func TestHandlerRoutes(t *testing.T) {
@@ -24,6 +27,9 @@ func TestHandlerRoutes(t *testing.T) {
 		{name: "home", path: "/", status: http.StatusOK, contentType: "text/html", body: "Writing"},
 		{name: "post", path: "/posts/hello", status: http.StatusOK, contentType: "text/html", body: "Hello"},
 		{name: "page", path: "/about", status: http.StatusOK, contentType: "text/html", body: "About"},
+		{name: "demos", path: "/demos", status: http.StatusOK, contentType: "text/html", body: `href="/demos/stable-gan"`},
+		{name: "Stable GAN prototype", path: "/demos/stable-gan", status: http.StatusOK, contentType: "text/html", body: "<h1>Stable GAN Prototype</h1>"},
+		{name: "generator without model", path: view.StableGANPath, status: http.StatusOK, contentType: "text/html", body: "The model is unavailable"},
 		{name: "health", path: "/healthz", status: http.StatusOK, body: "ok"},
 		{name: "robots", path: "/robots.txt", status: http.StatusOK, contentType: "text/plain", body: "Sitemap: https://example.test/sitemap.xml"},
 		{name: "sitemap", path: "/sitemap.xml", status: http.StatusOK, contentType: "application/xml", body: "https://example.test/posts/hello"},
@@ -67,6 +73,19 @@ func TestHandlerRejectsUnsupportedMethod(t *testing.T) {
 	}
 }
 
+func TestLegacyDemoRedirectsToStableGAN(t *testing.T) {
+	t.Parallel()
+
+	rec := httptest.NewRecorder()
+	testHandler(t).ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/demos/imgen40?ref=writing", nil))
+	if rec.Code != http.StatusPermanentRedirect {
+		t.Fatalf("legacy demo status = %d, want 308", rec.Code)
+	}
+	if got := rec.Header().Get("Location"); got != "/demos/stable-gan?ref=writing" {
+		t.Errorf("legacy demo redirected to %q", got)
+	}
+}
+
 func TestHandlerRedirectsWWWToCanonicalHost(t *testing.T) {
 	t.Parallel()
 
@@ -99,6 +118,54 @@ func TestCSPUsesOnlyLocalStylesAndFonts(t *testing.T) {
 	csp := rec.Header().Get("Content-Security-Policy")
 	if strings.Contains(csp, "googleapis.com") || strings.Contains(csp, "gstatic.com") {
 		t.Fatalf("CSP permits third-party font requests: %q", csp)
+	}
+}
+
+func TestWASMCompilationIsLimitedToGeneratorWorker(t *testing.T) {
+	t.Parallel()
+
+	h := testHandler(t)
+	for _, path := range []string{"/", view.StableGANPath, imgen40WorkerPath} {
+		rec := httptest.NewRecorder()
+		h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, path, nil))
+		allowed := strings.Contains(rec.Header().Get("Content-Security-Policy"), "'wasm-unsafe-eval'")
+		if allowed != (path == imgen40WorkerPath) {
+			t.Errorf("unexpected WebAssembly compilation policy for %s", path)
+		}
+	}
+}
+
+func TestVersionedGeneratorModel(t *testing.T) {
+	t.Parallel()
+
+	const modelData = "example model"
+	digest := fmt.Sprintf("%x", sha256.Sum256([]byte(modelData)))
+	modelURL := imgen40ModelPath + "?v=" + digest[:12]
+	assets := fstest.MapFS{
+		imgen40ModelFile:            {Data: []byte(modelData)},
+		"models/imgen40/SHA256SUMS": {Data: []byte(digest + "  static/" + imgen40ModelFile + "\n")},
+	}
+	h := Handler(&content.Store{}, assets, "https://example.test")
+
+	demo := httptest.NewRecorder()
+	h.ServeHTTP(demo, httptest.NewRequest(http.MethodGet, view.StableGANPath, nil))
+	if !strings.Contains(demo.Body.String(), `data-model-url="`+modelURL+`"`) {
+		t.Fatal("demo omitted the versioned model URL")
+	}
+
+	model := httptest.NewRecorder()
+	h.ServeHTTP(model, httptest.NewRequest(http.MethodGet, modelURL, nil))
+	if got := model.Body.String(); model.Code != http.StatusOK || got != modelData {
+		t.Fatalf("versioned model returned %d %q", model.Code, got)
+	}
+	if got := model.Header().Get("Cache-Control"); got != "public, max-age=31536000, immutable" {
+		t.Errorf("versioned model Cache-Control = %q", got)
+	}
+
+	stale := httptest.NewRecorder()
+	h.ServeHTTP(stale, httptest.NewRequest(http.MethodGet, imgen40ModelPath+"?v=old", nil))
+	if stale.Code != http.StatusNotFound {
+		t.Errorf("stale model URL returned %d, want 404", stale.Code)
 	}
 }
 

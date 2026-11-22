@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/ZdsAlpha/web/internal/content"
+	"github.com/ZdsAlpha/web/view"
 )
 
 // robots serves a permissive robots.txt that points crawlers at the sitemap.
@@ -31,13 +32,17 @@ type urlSet struct {
 	URLs    []sitemapURL `xml:"url"`
 }
 
-// sitemap serves an XML sitemap listing the home page, every post (with its
-// latest meaningful content date as lastmod) and every standalone page. Drafts
+// sitemap serves an XML sitemap listing the home page, demos, every post (with
+// its latest meaningful content date as lastmod) and every standalone page. Drafts
 // are absent because the production store is loaded without them.
 func sitemap(store *content.Store, baseURL string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		set := urlSet{Xmlns: "http://www.sitemaps.org/schemas/sitemap/0.9"}
-		set.URLs = append(set.URLs, sitemapURL{Loc: baseURL + "/"})
+		set.URLs = append(set.URLs,
+			sitemapURL{Loc: baseURL + "/"},
+			sitemapURL{Loc: baseURL + "/demos"},
+			sitemapURL{Loc: baseURL + view.StableGANPath},
+		)
 
 		for _, p := range store.Posts() {
 			u := sitemapURL{Loc: baseURL + "/posts/" + p.Slug}

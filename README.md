@@ -78,6 +78,29 @@ Markdown images automatically receive lazy-loading and asynchronous decoding
 hints. Keep SVG figures self-contained (no remote fonts or images) and include
 intrinsic `width`, `height`, and `viewBox` attributes.
 
+## Stable GAN Prototype
+
+The demo at `/demos/stable-gan` uses the exported model from the sibling
+`experiments` checkout. Copy it before running or building the site:
+
+```sh
+mkdir -p static/models/imgen40
+cp ../experiments/imgen40/export/generator_fp16.onnx static/models/imgen40/
+shasum -a 256 -c static/models/imgen40/SHA256SUMS
+```
+
+The 53 MB ONNX file is Git-ignored. Docker verifies its checksum before
+embedding it in the Go binary, so include it in the deploy context when
+building from a Git archive or clean checkout. The demo shows its example
+portraits when the model is missing during local development.
+
+When replacing the export, update `static/models/imgen40/SHA256SUMS` with the
+new checksum and rerun generation in the browser. The checksum versions the
+model URL, so browsers download the new weights when they first run generation.
+To update the ONNX Runtime Web release, replace the WASM entry module, its
+loader and binary, and the accompanying notices together. Update the paths in
+`static/js/imgen40-worker.js` and test generation and cache reuse.
+
 ## Deploy (Fly.io)
 
 ```sh

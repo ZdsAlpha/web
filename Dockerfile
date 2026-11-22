@@ -9,6 +9,9 @@ RUN go mod download
 
 COPY . .
 
+# Keep a deploy from shipping a demo with missing or stale model weights.
+RUN sha256sum -c static/models/imgen40/SHA256SUMS
+
 # Build a static, stripped binary. Generated files (view/*_templ.go,
 # static/css/chroma.css) and assets are committed and embedded via //go:embed,
 # so no codegen runs here and the runtime image needs only the binary.

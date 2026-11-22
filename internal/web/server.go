@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/ZdsAlpha/web/internal/content"
 	"github.com/ZdsAlpha/web/view"
@@ -22,8 +23,21 @@ func Handler(store *content.Store, staticFS fs.FS, baseURL string) http.Handler 
 	mux := http.NewServeMux()
 
 	// noDirFS disables directory listings; only files are served.
-	staticSrv := cacheStatic(http.FileServerFS(noDirFS{staticFS}))
-	mux.Handle("GET /static/", http.StripPrefix("/static/", staticSrv))
+	staticHandler := http.StripPrefix("/static/", http.FileServerFS(noDirFS{staticFS}))
+	mux.Handle("GET /static/", cacheStatic(staticHandler))
+	mux.HandleFunc("GET "+imgen40ModelPath, func(w http.ResponseWriter, r *http.Request) {
+		if requested := r.URL.Query().Get("v"); requested != "" {
+			version, _ := imgen40Model(staticFS)
+			if requested != version {
+				http.NotFound(w, r)
+				return
+			}
+			w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+		}
+		// Give the model transfer time on slower connections.
+		_ = http.NewResponseController(w).SetWriteDeadline(time.Now().Add(5 * time.Minute))
+		staticHandler.ServeHTTP(w, r)
+	})
 
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -44,6 +58,21 @@ func Handler(store *content.Store, staticFS fs.FS, baseURL string) http.Handler 
 			return
 		}
 		render(w, r, http.StatusOK, view.Post(p))
+	})
+	mux.HandleFunc("GET /demos", func(w http.ResponseWriter, r *http.Request) {
+		render(w, r, http.StatusOK, view.Demos())
+	})
+	mux.HandleFunc("GET /demos/imgen40", func(w http.ResponseWriter, r *http.Request) {
+		target := url.URL{Path: view.StableGANPath, RawQuery: r.URL.RawQuery}
+		http.Redirect(w, r, target.String(), http.StatusPermanentRedirect)
+	})
+	mux.HandleFunc("GET "+view.StableGANPath, func(w http.ResponseWriter, r *http.Request) {
+		version, modelBytes := imgen40Model(staticFS)
+		var modelURL string
+		if version != "" {
+			modelURL = imgen40ModelPath + "?v=" + version
+		}
+		render(w, r, http.StatusOK, view.StableGANPrototype(modelURL, modelBytes))
 	})
 
 	// Standalone pages live at the root (e.g. /about). Registered as a
@@ -91,18 +120,23 @@ func canonicalHostRedirect(next http.Handler, baseURL string) http.Handler {
 // full asset transfer on every page view.
 func cacheStatic(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Cache-Control", "public, max-age=3600")
+		cacheControl := "public, max-age=3600"
+		switch r.URL.Path {
+		case "/static/js/imgen40.js", imgen40WorkerPath:
+			// The page and worker share a message format and should update together.
+			cacheControl = "no-cache"
+		}
+		w.Header().Set("Cache-Control", cacheControl)
 		next.ServeHTTP(w, r)
 	})
 }
 
 // securityHeaders sets conservative security headers on every response. The CSP
 // allows only same-origin resources; there are no inline scripts or styles (the
-// theme bootstrap lives in /static/js/theme-init.js), so no hashes/nonces are
-// needed.
+// theme bootstrap lives in /static/js/theme-init.js). Only the generator worker
+// needs WebAssembly compilation.
 func securityHeaders(next http.Handler) http.Handler {
 	const csp = "default-src 'self'; " +
-		"script-src 'self'; " +
 		"style-src 'self'; " +
 		"font-src 'self'; " +
 		"img-src 'self' data:; " +
@@ -111,7 +145,11 @@ func securityHeaders(next http.Handler) http.Handler {
 		"form-action 'self'"
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		h := w.Header()
-		h.Set("Content-Security-Policy", csp)
+		scriptSrc := "script-src 'self'"
+		if r.URL.Path == imgen40WorkerPath {
+			scriptSrc += " 'wasm-unsafe-eval'"
+		}
+		h.Set("Content-Security-Policy", csp+"; "+scriptSrc)
 		h.Set("X-Content-Type-Options", "nosniff")
 		h.Set("X-Frame-Options", "DENY")
 		h.Set("Referrer-Policy", "strict-origin-when-cross-origin")
